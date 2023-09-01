@@ -1,0 +1,4 @@
+#ifndef ZENITH_BTN_REMAP_H
+#define ZENITH_BTN_REMAP_H
+
+#endif // ZENITH_BTN_REMAP_H
