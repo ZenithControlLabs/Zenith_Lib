@@ -34,15 +34,15 @@ void linearize_cal(const float cleaned_points_x[],
     fit_points_y[4] = (double)in_y[3];                   // up
 
     for (int i = 0; i < 5; i++) {
-        debug_print("Fit point %d; (x,y) = (%f, %f)\n", i, fit_points_x[i],
-                    fit_points_y[i]);
+        printf("Fit point %d; (x,y) = (%f, %f)\n", i, fit_points_x[i],
+               fit_points_y[i]);
     }
 
     double temp_coeffs_x[FIT_ORDER + 1];
     double temp_coeffs_y[FIT_ORDER + 1];
 
-    polyfit(5, fit_points_x, perfect_angles, FIT_ORDER + 1, temp_coeffs_x);
-    polyfit(5, fit_points_y, perfect_angles, FIT_ORDER + 1, temp_coeffs_y);
+    polyfit(5, fit_points_x, linearize_reference, FIT_ORDER + 1, temp_coeffs_x);
+    polyfit(5, fit_points_y, linearize_reference, FIT_ORDER + 1, temp_coeffs_y);
 
     // Save these coefficients in the calibration results structure
     // Convert down to float in the process
@@ -78,9 +78,9 @@ void linearize_cal(const float cleaned_points_x[],
         out_y[i - 1] = linearize(in_y[i], calib_results->fit_coeffs_y);
     }
 
-    debug_print("Center point (confirmation): (x,y) = (%f,%f)\n",
-                linearize(in_x[0], calib_results->fit_coeffs_x),
-                linearize(in_y[0], calib_results->fit_coeffs_y));
+    printf("Center point (confirmation): (x,y) = (%f,%f)\n",
+           linearize(in_x[0], calib_results->fit_coeffs_x),
+           linearize(in_y[0], calib_results->fit_coeffs_y));
 }
 
 // POLYFIT CODE FROM FOLLOWING LIBRARY:

@@ -1,5 +1,5 @@
 #ifndef ZENITH_STICK_H
-#define ZENITH_SITCK_H
+#define ZENITH_STICK_H
 
 #include <stdint.h>
 
@@ -21,9 +21,9 @@ typedef struct {
     float linearized_points_y[NUM_NOTCHES];
 } stick_config_t;
 
-void process_stick(analog_data_t *in, const calib_results_t *calib_results,
-                   analog_data_t *out);
+void process_stick(analog_data_t *in, analog_data_t *out,
+                   const calib_results_t *calib_results);
 
-void stick_task(void);
+void stick_task(analog_data_t *in, analog_data_t *out);
 
 #endif // ZENITH_STICK_H

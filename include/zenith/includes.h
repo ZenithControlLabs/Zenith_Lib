@@ -4,7 +4,12 @@
 // clang-format off
 
 // system includes
+#include <math.h>
+
 #include <pico/multicore.h>
+#include <pico/bootrom.h>
+#include <hardware/pio.h>
+#include <hardware/clocks.h>
 #include <tusb.h>
 
 // local includes
@@ -19,10 +24,14 @@
 
 #include "zenith/usb/tusb_config.h"
 #include "zenith/usb/descriptors.h"
+#include "zenith/usb/desc_bos.h"
+#include "zenith/usb/webusb.h"
 #include "zenith/usb/usb.h" // The USB interface.
 
-#include "zenith/comms/gamecube.h" // For talking over the controller's main protocol (N64, GCC, etc.)
-#include "zenith/comms/n64.h" // For talking over the controller's main protocol (N64, GCC, etc.)
+#include "joybus.pio.h"
+#include "zenith/comms/gamecube.h"
+#include "zenith/comms/n64.h"
+#include "zenith/comms/n64_crc.h"
 #include "zenith/comms/comms.h" // For talking over the controller's main protocol (N64, GCC, etc.)
 
 #include "zenith/input/btn_remap.h"

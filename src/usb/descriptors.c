@@ -96,14 +96,14 @@ const uint8_t HID_REPORT_DESCRIPTOR [] = {
     0xC0
 };
 
-const uint8_t CONFIGURAITON_DESCRIPTOR[] = {
+const uint8_t CONFIGURATION_DESCRIPTOR[] = {
      // Configuration number, interface count, string index, total length, attribute, power in mA
     TUD_CONFIG_DESCRIPTOR(1, 2, 0, 64, TUSB_DESC_CONFIG_ATT_REMOTE_WAKEUP, 500),
 
     // Interface
     9, TUSB_DESC_INTERFACE, 0x00, 0x00, 0x02, TUSB_CLASS_HID, 0x00, 0x00, 0x00,
     // HID Descriptor
-    9, HID_DESC_TYPE_HID, U16_TO_U8S_LE(0x0111), 0, 1, HID_DESC_TYPE_REPORT, U16_TO_U8S_LE(sizeof(swpro_hid_report_descriptor)),
+    9, HID_DESC_TYPE_HID, U16_TO_U8S_LE(0x0111), 0, 1, HID_DESC_TYPE_REPORT, U16_TO_U8S_LE(sizeof(HID_REPORT_DESCRIPTOR)),
     // Endpoint Descriptor
     7, TUSB_DESC_ENDPOINT, 0x81, TUSB_XFER_INTERRUPT, U16_TO_U8S_LE(64), 8,
     // Endpoint Descriptor
@@ -120,16 +120,16 @@ const uint8_t CONFIGURAITON_DESCRIPTOR[] = {
 
 const tusb_desc_webusb_url_t URL_DESCRIPTOR =
     {
-        .bLength = 3 + sizeof(HOJA_WEBUSB_URL) - 1,
+        .bLength = 3 + sizeof(ZTH_WEBUSB_URL) - 1,
         .bDescriptorType = 3, // WEBUSB URL type
         .bScheme = 1,         // 0: http, 1: https
-        .url = HOJA_WEBUSB_URL};
+        .url = ZTH_WEBUSB_URL};
 
 const char* STRING_DESCRIPTOR[] = {
     // array of pointer to string descriptors
     (char[]){0x09, 0x04},                // 0: is supported language is English (0x0409)
-    HOJA_MANUFACTURER,              // 1: Manufacturer
-    HOJA_PRODUCT,        // 2: Product
+    ZTH_MANUFACTURER,              // 1: Manufacturer
+    ZTH_PRODUCT,        // 2: Product
     "000000",           // 3: Serials, should use chip ID
 };
 

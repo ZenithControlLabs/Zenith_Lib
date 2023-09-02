@@ -3,6 +3,9 @@
 
 #include "zenith/input/stick.h"
 
+static const double linearize_reference[] = {
+    -100 / 128.0, -75 / 128.0, 0 / 128.0, 75 / 128.0, 100 / 128.0};
+
 float linearize(const float point, const float coefficients[]);
 
 void linearize_cal(const float cleaned_points_x[],

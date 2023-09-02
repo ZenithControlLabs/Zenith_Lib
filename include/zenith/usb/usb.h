@@ -1,7 +1,7 @@
 #ifndef ZENITH_USB_H
 #define ZENITH_USB_H
 
-#define REPORT_ID_GAMEPAD 4
+#define HID_REPORT_GAMEPAD 4
 
 extern bool _usb_busy;
 

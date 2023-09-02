@@ -13,9 +13,10 @@ void cb_zenith_read_buttons(btn_data_t *buttons);
 void cb_zenith_read_analog(analog_data_t *analog_data);
 
 // app callbacks
-void cb_zenith_app_init(void);
 void cb_zenith_core1_init(void);
 void cb_zenith_core0_inject(void);
 void cb_zenith_core1_inject(void);
+
+void zenith_start(void);
 
 #endif // ZENITH_H

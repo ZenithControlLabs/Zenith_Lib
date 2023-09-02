@@ -38,8 +38,8 @@ typedef struct {
     uint8_t analog_trigger_r;
 } __attribute__((packed)) gamecube_input_t;
 
-void gamecube_comms_task(uint32_t timestamp, button_data_s *buttons,
-                         a_data_s *analog);
+void gamecube_comms_task(uint32_t timestamp, btn_data_t *buttons,
+                         analog_data_t *analog);
 void gamecube_init();
 
 #endif // ZENITH_GAMECUBE_H

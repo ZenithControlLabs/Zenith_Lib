@@ -1,8 +1,8 @@
 #ifndef ZENITH_N64_H
 #define ZENITH_N64_H
 
-#include "hoja_includes.h"
-#include "interval.h"
+#include "zenith/utilities/interval.h"
+#include <stdint.h>
 
 typedef struct {
     union {

@@ -69,3 +69,8 @@ void fold_center_points(const float raw_cal_points_x[],
     cleaned_points_x[0] = cleaned_points_x[0] / ((float)NUM_NOTCHES - 2);
     cleaned_points_y[0] = cleaned_points_y[0] / ((float)NUM_NOTCHES - 2);
 }
+
+void calibration_start(void) {}
+void calibration_advance(void) {}
+void calibration_undo(void) {}
+void calibration_finish(void) {}

@@ -8,7 +8,7 @@
  * the cube64 project
  *  http://cia.vc/stats/project/navi-misc/cube64
  */
-uint8_t crc_repeating_table[256] = {
+static uint8_t crc_repeating_table[256] = {
     0xFF, // 0x00
     0x14, // 0x01
     0xAC, // 0x02

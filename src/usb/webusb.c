@@ -22,21 +22,19 @@ void webusb_command_processor(uint8_t *data) {
 
     case WEBUSB_CMD_FW_GET: {
         _webusb_out_buffer[0] = WEBUSB_CMD_FW_GET;
-        _webusb_out_buffer[1] = (HOJA_FW_VERSION & 0xFF00) >> 8;
-        _webusb_out_buffer[2] = HOJA_FW_VERSION & 0xFF;
+        _webusb_out_buffer[1] = (ZTH_FW_MINOR << 8) | (ZTH_FW_PATCH & 0xFF);
+        _webusb_out_buffer[2] = ZTH_FW_MAJOR;
         tud_vendor_n_write(0, _webusb_out_buffer, 64);
         tud_vendor_n_flush(0);
     } break;
 
-    case:
-        WEBUSB_CMD_CALIBRATION_START {
-            printf("WebUSB: Got calibration START command.\n");
-            calibration_start();
-            _webusb_out_buffer[0] = WEBUSB_CMD_CALIBRATION_START;
-            tud_vendor_n_write(0, _webusb_out_buffer, 64);
-            tud_vendor_n_flush(0);
-        }
-        break;
+    case WEBUSB_CMD_CALIBRATION_START: {
+        printf("WebUSB: Got calibration START command.\n");
+        calibration_start();
+        _webusb_out_buffer[0] = WEBUSB_CMD_CALIBRATION_START;
+        tud_vendor_n_write(0, _webusb_out_buffer, 64);
+        tud_vendor_n_flush(0);
+    } break;
 
     case WEBUSB_CMD_CALIBRATION_NEXT: {
         printf("WebUSB: Got calibration NEXT command.\n");
@@ -61,14 +59,14 @@ void webusb_command_processor(uint8_t *data) {
             printf("Notch out of range?\n");
             break;
         }
-        _settings.stick_config.notch_points_x[notch] = buffer[0];
-        _settings.stick_config.notch_points_y[notch] = buffer[1];
+        _settings.stick_config.notch_points_x[notch] = data[2];
+        _settings.stick_config.notch_points_y[notch] = data[3];
         // recompute notch calibration
-        notch_calibrate(_cfg_st.stick_config.linearized_points_x,
-                        _cfg_st.stick_config.linearized_points_y,
-                        _cfg_st.stick_config.notch_points_x,
-                        _cfg_st.stick_config.notch_points_y,
-                        &(_cfg_st.calib_results));
+        notch_calibrate(_settings.stick_config.linearized_points_x,
+                        _settings.stick_config.linearized_points_y,
+                        _settings.stick_config.notch_points_x,
+                        _settings.stick_config.notch_points_y,
+                        &(_settings.calib_results));
     } break;
     case WEBUSB_CMD_NOTCH_GET: {
         printf("WebUSB: Got notch point GET command.\n");
@@ -85,8 +83,8 @@ void webusb_command_processor(uint8_t *data) {
 
     case WEBUSB_CMD_DBG_RAW_GET: {
         printf("WebUSB: Got raw analog GET command.\n");
-        memcpy(_webusb_out_buffer, _analog_data.ax1, 4);
-        memcpy(_webusb_out_buffer + 4, _analog_data.ax2, 4);
+        memcpy(_webusb_out_buffer, &_analog_data.ax1, 4);
+        memcpy(_webusb_out_buffer + 4, &_analog_data.ax2, 4);
 
         tud_vendor_n_write(0, _webusb_out_buffer, 64);
         tud_vendor_n_flush(0);
@@ -94,21 +92,21 @@ void webusb_command_processor(uint8_t *data) {
 
     case WEBUSB_CMD_REMAP_SET: {
         printf("WebUSB: Got Remap SET command.\n");
-        remap_listen_enable(data[1], data[2]);
+        // remap_listen_enable(data[1], data[2]);
     } break;
     case WEBUSB_CMD_REMAP_GET: {
         printf("WebUSB: Got Remap GET command.\n");
-        remap_send_data_webusb(data[1]);
+        // remap_send_data_webusb(data[1]);
     } break;
 
     case WEBUSB_CMD_COMMIT_SETTINGS: {
         printf("WebUSB: Got commit settings command.\n");
-        settings_save_webindicate();
-        settings_save();
+        // settings_save_webindicate();
+        // settings_save();
     } break;
     case WEBUSB_CMD_RESET_FACTORY: {
         printf("WebUSB: Got reset settings to factory command.\n");
-        settings_reset_factory();
+        // settings_reset_factory();
     } break;
     }
 }

@@ -17,8 +17,7 @@ typedef enum {
     WEBUSB_CMD_NOTCH_SET = 0x04,
     WEBUSB_CMD_NOTCH_GET = 0xA4,
 
-    WEBUSB_CMD_DBG_SET = 0x05,
-    WEBUSB_CMD_DBG_GET = 0xA5,
+    WEBUSB_CMD_DBG_RAW_GET = 0xA5,
 
     WEBUSB_CMD_REMAP_SET = 0x06,
     WEBUSB_CMD_REMAP_GET = 0xA6,
@@ -26,6 +25,9 @@ typedef enum {
     WEBUSB_CMD_COMMIT_SETTINGS = 0xF1,
     WEBUSB_CMD_RESET_FACTORY = 0xF2
 } webusb_cmd_t;
+
+// defining for access to raw data thru USB
+extern analog_data_t _analog_data;
 
 void webusb_save_confirm();
 void webusb_command_processor(uint8_t *data);

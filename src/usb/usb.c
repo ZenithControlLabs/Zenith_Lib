@@ -21,13 +21,14 @@ int usb_init(void) {
 }
 
 int hid_report(btn_data_t *buttons, analog_data_t *analog) {
-    hid_gamepad_report_t report = {.x = analog.ax1,
-                                   .y = analog.ax2,
-                                   .z = analog.ax3,
-                                   .rx = analog.ax4,
-                                   .ry = analog.ax5.rz = analog.ax6,
-                                   .hat = GAMEPAD_HAD_CENTERED,
-                                   .buttons = buttons.r};
+    hid_gamepad_report_t report = {.x = analog->ax1,
+                                   .y = analog->ax2,
+                                   .z = analog->ax3,
+                                   .rx = analog->ax4,
+                                   .ry = analog->ax5,
+                                   .rz = analog->ax6,
+                                   .hat = GAMEPAD_HAT_CENTERED,
+                                   .buttons = (*buttons).r};
 
     return tud_hid_report(HID_REPORT_GAMEPAD, &report, 64);
 }
@@ -104,13 +105,13 @@ uint16_t const *tud_descriptor_string_cb(uint8_t index, uint16_t langid) {
     uint8_t chr_count;
 
     if (index == 0) {
-        memcpy(&_desc_str[1], global_string_descriptor[0], 2);
+        memcpy(&_desc_str[1], STRING_DESCRIPTOR[0], 2);
         chr_count = 1;
     } else {
         // Note: the 0xEE index string is a Microsoft OS 1.0 Descriptors.
         // https://docs.microsoft.com/en-us/windows-hardware/drivers/usbcon/microsoft-defined-usb-descriptors
 
-        const char *str = global_string_descriptor[index];
+        const char *str = STRING_DESCRIPTOR[index];
 
         // Cap at max char... WHY?
         chr_count = strlen(str);
@@ -154,8 +155,8 @@ bool tud_vendor_control_xfer_cb(uint8_t rhport, uint8_t stage,
             // match vendor request in BOS descriptor
             // Get landing page url
             return tud_control_xfer(rhport, request,
-                                    (void *)(uintptr_t)&desc_url,
-                                    desc_url.bLength);
+                                    (void *)(uintptr_t)&URL_DESCRIPTOR,
+                                    URL_DESCRIPTOR.bLength);
 
         case VENDOR_REQUEST_MICROSOFT:
             if (request->wIndex == 7) {

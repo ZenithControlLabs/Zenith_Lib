@@ -1,7 +1,7 @@
 #ifndef ZENITH_CALIB_H
 #define ZENITH_CALIB_H
 
-extern int _cal_step;
+extern volatile int _cal_step;
 
 void calibration_start(void);
 
