@@ -21,80 +21,59 @@ const tusb_desc_device_t DEVICE_DESCRIPTOR = {
     .bNumConfigurations = 0x01
 };
 
+#define REPORT_ID_GAMEPAD 4
+
 // Generic Gamepad HID descriptor
 const uint8_t HID_REPORT_DESCRIPTOR [] = {
-    0x05, 0x01,        // Usage Page (Generic Desktop Ctrls)
+   HID_USAGE_PAGE ( HID_USAGE_PAGE_DESKTOP     )                 ,\
+    HID_USAGE      ( HID_USAGE_DESKTOP_GAMEPAD  )                 ,\
+    HID_COLLECTION ( HID_COLLECTION_APPLICATION )                 ,\
+        /* Report ID if any */\
+        HID_REPORT_ID(REPORT_ID_GAMEPAD)\
+        /* 8 bit X, Y, Z, Rz, Rx, Ry (min -127, max 127 ) */ \
+        HID_USAGE_PAGE     ( HID_USAGE_PAGE_DESKTOP                 ) ,\
+        HID_USAGE          ( HID_USAGE_DESKTOP_X                    ) ,\
+        HID_USAGE          ( HID_USAGE_DESKTOP_Y                    ) ,\
+        HID_USAGE          ( HID_USAGE_DESKTOP_Z                    ) ,\
+        HID_USAGE          ( HID_USAGE_DESKTOP_RZ                    ) ,\
+        HID_USAGE          ( HID_USAGE_DESKTOP_RX                   ) ,\
+        HID_USAGE          ( HID_USAGE_DESKTOP_RY                   ) ,\
+        HID_LOGICAL_MIN    ( 0x81                                   ) ,\
+        HID_LOGICAL_MAX    ( 0x7f                                   ) ,\
+        HID_REPORT_COUNT   ( 6                                      ) ,\
+        HID_REPORT_SIZE    ( 8                                      ) ,\
+        HID_INPUT          ( HID_DATA | HID_VARIABLE | HID_ABSOLUTE ) ,\
+        /* 8 bit DPad/Hat Button Map  */ \
+        HID_USAGE_PAGE     ( HID_USAGE_PAGE_DESKTOP                 ) ,\
+        HID_USAGE          ( HID_USAGE_DESKTOP_HAT_SWITCH           ) ,\
+        HID_LOGICAL_MIN    ( 1                                      ) ,\
+        HID_LOGICAL_MAX    ( 8                                      ) ,\
+        HID_PHYSICAL_MIN   ( 0                                      ) ,\
+        HID_PHYSICAL_MAX_N ( 315, 2                                 ) ,\
+        HID_REPORT_COUNT   ( 1                                      ) ,\
+        HID_REPORT_SIZE    ( 8                                      ) ,\
+        HID_INPUT          ( HID_DATA | HID_VARIABLE | HID_ABSOLUTE ) ,\
+        /* 32 bit Button Map */ \
+        HID_USAGE_PAGE     ( HID_USAGE_PAGE_BUTTON                  ) ,\
+        HID_USAGE_MIN      ( 1                                      ) ,\
+        HID_USAGE_MAX      ( 32                                     ) ,\
+        HID_LOGICAL_MIN    ( 0                                      ) ,\
+        HID_LOGICAL_MAX    ( 1                                      ) ,\
+        HID_REPORT_COUNT   ( 32                                     ) ,\
+        HID_REPORT_SIZE    ( 1                                      ) ,\
+        HID_INPUT          ( HID_DATA | HID_VARIABLE | HID_ABSOLUTE ) ,\
+        /* Feature reports */
+        HID_USAGE_PAGE_N     ( HID_USAGE_PAGE_VENDOR, 2                  ) ,\
+        HID_USAGE (0x01),\
+        HID_LOGICAL_MIN    ( 0x80                                   ) ,\
+        HID_LOGICAL_MAX    ( 0x7F                                   ) ,\
+        HID_REPORT_COUNT   ( 1                                     ) ,\
+        HID_REPORT_SIZE    ( 16                                      ) ,\
+        HID_FEATURE        ( HID_DATA | HID_VARIABLE | HID_ABSOLUTE | HID_WRAP_NO | HID_LINEAR | HID_PREFERRED_STATE | HID_NO_NULL_POSITION | HID_NON_VOLATILE ) ,\
+    HID_COLLECTION_END             ,\
 
-    0x09, 0x05,        // Usage (Game Pad)
-    0xA1, 0x01,        // Collection (Application)
-        0xA1, 0x01,         // Collection (Application)
-            0x85, 0x01,        //   Report ID (1)
-
-            0x05, 0x09,        //   Usage Page (Button)
-            0x15, 0x00,        //   Logical Minimum (0)
-            0x25, 0x01,        //   Logical Maximum (1)
-            0x35, 0x00,        //   Physical Minimum (0)
-            0x45, 0x01,        //   Physical Maximum (1)
-            0x75, 0x01,        //   Report Size (1)
-            0x95, 0x0E,        //   Report Count (14)
-            0x19, 0x01,        //   Usage Minimum (0x01)
-            0x29, 0x0E,        //   Usage Maximum (0x0E)
-            0x81, 0x02,        //   Input (Data,Var,Abs,No Wrap,Linear,Preferred State,No Null Position)
-
-            0x95, 0x02,        //   Report Count (2)
-            0x81, 0x01,        //   Input (Const,Array,Abs,No Wrap,Linear,Preferred State,No Null Position)
-
-            0x05, 0x01,        //   Usage Page (Generic Desktop Ctrls)
-            0x25, 0x07,        //   Logical Maximum (7)
-            0x46, 0x3B, 0x01,  //   Physical Maximum (315)
-            0x75, 0x04,        //   Report Size (4)
-            0x95, 0x01,        //   Report Count (1)
-            0x65, 0x14,        //   Unit (System: English Rotation, Length: Centimeter)
-            0x09, 0x39,        //   Usage (Hat switch)
-            0x81, 0x42,        //   Input (Data,Var,Abs,No Wrap,Linear,Preferred State,Null State)
-            0x65, 0x00,        //   Unit (None)
-            0x95, 0x01,        //   Report Count (1)
-            0x81, 0x01,        //   Input (Const,Array,Abs,No Wrap,Linear,Preferred State,No Null Position)
-
-            0x26, 0xFF, 0x00,  //   Logical Maximum (255)
-            0x46, 0xFF, 0x00,  //   Physical Maximum (255)
-            0x09, 0x30,        //   Usage (X)
-            0x09, 0x31,        //   Usage (Y)
-            0x09, 0x32,        //   Usage (Z)
-            0x09, 0x35,        //   Usage (Rz)
-            0x09, 0x36,        //   Usage (Slider)
-            0x09, 0x37,        //   Usage (Dial)
-
-            0x75, 0x08,        //   Report Size (8)
-            0x95, 0x06,        //   Report Count (6)
-            0x81, 0x02,        //   Input (Data,Var,Abs,No Wrap,Linear,Preferred State,No Null Position)
-
-        0xc0,
-
-        0xA1, 0x01,         // Collection (Application)
-            0x06, 0x00, 0xFF,      //            USAGE_PAGE (Vendor Defined Page 1)
-            0x09, 0x01,            //            USAGE (Vendor Usage 1)
-            0x85, 0x02,            //           Report ID (2)
-            0x15, 0x00,            //            LOGICAL_MINIMUM (0)
-            0x26, 0xff, 0x00,       //            LOGICAL_MAXIMUM (255)
-            0x75, 0x08,            //            REPORT_SIZE (8)
-            0x95, 0x0A,            //            REPORT_COUNT (10)
-            0x81, 0x02,        //   Input (Data,Var,Abs,No Wrap,Linear,Preferred State,No Null Position)
-        0xc0,
-
-        0xA1, 0x01,         // Collection (Application)
-            0x06, 0x00, 0xFF,      //            USAGE_PAGE (Vendor Defined Page 1)
-            0x09, 0x01,            //            USAGE (Vendor Usage 1)
-            0x85, 0x02,            //           Report ID (2)
-            0x15, 0x00,            //            LOGICAL_MINIMUM (0)
-            0x26, 0xff, 0x00,       //            LOGICAL_MAXIMUM (255)
-            0x75, 0x08,            //            REPORT_SIZE (8)
-            0x95, 0x0A,            //            REPORT_COUNT (10)
-            0x91, 0x02,            //            OUTPUT (Data,Var,Abs)
-        0xc0,
-    // 125 bytes
-    0xC0
 };
+
 
 const uint8_t CONFIGURATION_DESCRIPTOR[] = {
      // Configuration number, interface count, string index, total length, attribute, power in mA

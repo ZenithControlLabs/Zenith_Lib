@@ -21,16 +21,16 @@ int usb_init(void) {
 }
 
 int hid_report(btn_data_t *buttons, analog_data_t *analog) {
-    hid_gamepad_report_t report = {.x = analog->ax1,
-                                   .y = analog->ax2,
-                                   .z = analog->ax3,
-                                   .rx = analog->ax4,
-                                   .ry = analog->ax5,
-                                   .rz = analog->ax6,
+    hid_gamepad_report_t report = {.x = (int8_t)(analog->ax1 * 128.0),
+                                   .y = (int8_t)(analog->ax2 * 128.0),
+                                   .z = (int8_t)(analog->ax3 * 128.0),
+                                   .rx = (int8_t)(analog->ax4 * 128.0),
+                                   .ry = (int8_t)(analog->ax5 * 128.0),
+                                   .rz = (int8_t)(analog->ax6 * 128.0),
                                    .hat = GAMEPAD_HAT_CENTERED,
-                                   .buttons = (*buttons).r};
+                                   .buttons = buttons->r};
 
-    return tud_hid_report(HID_REPORT_GAMEPAD, &report, 64);
+    return tud_hid_report(0x4, &report, sizeof(hid_gamepad_report_t));
 }
 
 void usb_task(uint32_t timestamp, btn_data_t *buttons, analog_data_t *analog) {
