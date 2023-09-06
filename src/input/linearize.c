@@ -1,22 +1,21 @@
 #include "zenith/includes.h"
 
-float linearize(const float point, const float coefficients[]) {
+ax_t linearize(const ax_t point, const float coefficients[]) {
     return (coefficients[0] * (point * point * point) +
             coefficients[1] * (point * point) + coefficients[2] * point +
             coefficients[3]);
 }
 
-void linearize_cal(const float cleaned_points_x[],
-                   const float cleaned_points_y[], float linearized_points_x[],
-                   float linearized_points_y[],
+void linearize_cal(const ax_t cleaned_points_x[], const ax_t cleaned_points_y[],
+                   ax_t linearized_points_x[], ax_t linearized_points_y[],
                    calib_results_t *calib_results) {
 
     // for readability
-    const float *in_x = cleaned_points_x;
-    const float *in_y = cleaned_points_y;
+    const ax_t *in_x = cleaned_points_x;
+    const ax_t *in_y = cleaned_points_y;
 
-    float *out_x = linearized_points_x;
-    float *out_y = linearized_points_y;
+    ax_t *out_x = linearized_points_x;
+    ax_t *out_y = linearized_points_y;
 
     double fit_points_x[5];
     double fit_points_y[5];

@@ -5,6 +5,9 @@
 
 // system includes
 #include <math.h>
+#ifndef __STDC_NO_ATOMICS__
+#include <stdatomic.h>
+#endif
 
 #include <pico/multicore.h>
 #include <pico/bootrom.h>

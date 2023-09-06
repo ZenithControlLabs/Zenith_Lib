@@ -15,10 +15,10 @@ typedef struct {
 } calib_results_t;
 
 typedef struct {
-    int8_t notch_points_x[NUM_NOTCHES];
-    int8_t notch_points_y[NUM_NOTCHES];
-    float linearized_points_x[NUM_NOTCHES];
-    float linearized_points_y[NUM_NOTCHES];
+    ax_t notch_points_x[NUM_NOTCHES];
+    ax_t notch_points_y[NUM_NOTCHES];
+    ax_t linearized_points_x[NUM_NOTCHES];
+    ax_t linearized_points_y[NUM_NOTCHES];
 } stick_config_t;
 
 void process_stick(analog_data_t *in, analog_data_t *out,

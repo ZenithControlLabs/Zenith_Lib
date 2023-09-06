@@ -38,4 +38,24 @@
 #define ZTH_LINEARIZATION_EN 1
 #endif
 
+// if you want to use a different set of analog data for calibration,
+// enable this and implement cb_zenith_read_analog_cal
+// useful for implementing multisampling or other means of pre-processing data
+// going into calibration
+#ifndef ZTH_SEPARATE_CAL_READ
+#define ZTH_SEPARATE_CAL_READ 0
+#endif
+
+#ifndef ZTH_USB_INTERVAL
+#define ZTH_USB_INTERVAL USBRATE_8
+#endif
+
+#ifndef ZTH_STICK_INTERVAL
+#define ZTH_STICK_INTERVAL 500
+#endif
+
+#ifndef ZTH_WEBUSB_INTERVAL
+#define ZTH_WEBUSB_INTERVAL 16000
+#endif
+
 #endif // ZENITH_CFG_DEF_H

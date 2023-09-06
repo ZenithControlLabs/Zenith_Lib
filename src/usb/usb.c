@@ -20,26 +20,31 @@ int usb_init(void) {
     return tusb_init();
 }
 
-int hid_report(btn_data_t *buttons, analog_data_t *analog) {
-    hid_gamepad_report_t report = {.x = (int8_t)(analog->ax1 * 128.0),
-                                   .y = (int8_t)(analog->ax2 * 128.0),
-                                   .z = (int8_t)(analog->ax3 * 128.0),
-                                   .rx = (int8_t)(analog->ax4 * 128.0),
-                                   .ry = (int8_t)(analog->ax5 * 128.0),
-                                   .rz = (int8_t)(analog->ax6 * 128.0),
-                                   .hat = GAMEPAD_HAT_CENTERED,
-                                   .buttons = buttons->r};
+int hid_report(btn_data_t *buttons, analog_data_t *analog,
+               analog_data_t *analog_raw) {
+    hid_gamepad_report_ext_t report = {.x = (int8_t)(analog->ax1 * 128.0),
+                                       .y = (int8_t)(analog->ax2 * 128.0),
+                                       .z = (int8_t)(analog->ax3 * 128.0),
+                                       .rx = (int8_t)(analog->ax4 * 128.0),
+                                       .ry = (int8_t)(analog->ax5 * 128.0),
+                                       .rz = (int8_t)(analog->ax6 * 128.0),
+                                       .hat = GAMEPAD_HAT_CENTERED,
+                                       .buttons = buttons->r,
+                                       .ax1_raw = analog_raw->ax1,
+                                       .ax2_raw = analog_raw->ax2};
 
-    return tud_hid_report(0x4, &report, sizeof(hid_gamepad_report_t));
+    return tud_hid_report(0x4, &report, sizeof(hid_gamepad_report_ext_t));
 }
 
-void usb_task(uint32_t timestamp, btn_data_t *buttons, analog_data_t *analog) {
+void usb_task(uint32_t timestamp, btn_data_t *buttons, analog_data_t *analog,
+              analog_data_t *analog_raw) {
     tud_task();
 
     if (interval_resettable_run(timestamp, _usb_rate, _usb_clear)) {
         if (tud_hid_ready()) {
-            hid_report(buttons, analog);
+            hid_report(buttons, analog, analog_raw);
         }
+        webusb_input_report();
     } else {
         _usb_clear = false;
     }

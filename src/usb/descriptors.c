@@ -5,19 +5,19 @@
 const tusb_desc_device_t DEVICE_DESCRIPTOR = {
     .bLength = 18,
     .bDescriptorType = TUSB_DESC_DEVICE,
-    .bcdUSB = 0x0200,
+    .bcdUSB = 0x0210, // Changed from 0x0200 to 2.1 for BOS & WebUSB
     .bDeviceClass = 0x00,
     .bDeviceSubClass = 0x00,
     .bDeviceProtocol = 0x00,
 
     .bMaxPacketSize0 = 64,
-    .idVendor = 0x20d6,
-    .idProduct = 0xa714,
+    .idVendor = ZTH_VID,
+    .idProduct = ZTH_PID,
 
-    .bcdDevice = 0x0200,
+    .bcdDevice = 0x0100,
     .iManufacturer = 0x01,
     .iProduct = 0x02,
-    .iSerialNumber = 0x00,
+    .iSerialNumber = 0x03,
     .bNumConfigurations = 0x01
 };
 
@@ -62,14 +62,14 @@ const uint8_t HID_REPORT_DESCRIPTOR [] = {
         HID_REPORT_COUNT   ( 32                                     ) ,\
         HID_REPORT_SIZE    ( 1                                      ) ,\
         HID_INPUT          ( HID_DATA | HID_VARIABLE | HID_ABSOLUTE ) ,\
-        /* Feature reports */
+        /* Raw reporting */
         HID_USAGE_PAGE_N     ( HID_USAGE_PAGE_VENDOR, 2                  ) ,\
         HID_USAGE (0x01),\
         HID_LOGICAL_MIN    ( 0x80                                   ) ,\
         HID_LOGICAL_MAX    ( 0x7F                                   ) ,\
-        HID_REPORT_COUNT   ( 1                                     ) ,\
-        HID_REPORT_SIZE    ( 16                                      ) ,\
-        HID_FEATURE        ( HID_DATA | HID_VARIABLE | HID_ABSOLUTE | HID_WRAP_NO | HID_LINEAR | HID_PREFERRED_STATE | HID_NO_NULL_POSITION | HID_NON_VOLATILE ) ,\
+        HID_REPORT_COUNT   ( 2                                    ) ,\
+        HID_REPORT_SIZE    ( 32                                      ) ,\
+        HID_INPUT        ( HID_DATA | HID_VARIABLE | HID_ABSOLUTE | HID_WRAP_NO | HID_LINEAR | HID_PREFERRED_STATE | HID_NO_NULL_POSITION | HID_NON_VOLATILE ) ,\
     HID_COLLECTION_END             ,\
 
 };

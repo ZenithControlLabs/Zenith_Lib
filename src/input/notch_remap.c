@@ -18,7 +18,7 @@ void inverse(const float in[3][3], float out[3][3]) {
     out[2][2] = (in[0][0] * in[1][1] - in[1][0] * in[0][1]) * invdet;
 }
 
-void notch_remap(const float x_in, const float y_in, float *x_out, float *y_out,
+void notch_remap(const ax_t x_in, const ax_t y_in, ax_t *x_out, ax_t *y_out,
                  const calib_results_t *calib_results) {
     // determine the angle between the x unit vector and the current position
     // vector
@@ -78,9 +78,8 @@ void print_mtx(const float matrix[3][3]) {
     printf("\n");
 }
 
-void notch_calibrate(const float in_points_x[], const float in_points_y[],
-                     const int8_t notch_points_x[],
-                     const int8_t notch_points_y[],
+void notch_calibrate(const ax_t in_points_x[], const ax_t in_points_y[],
+                     const ax_t notch_points_x[], const ax_t notch_points_y[],
                      calib_results_t *calib_results) {
     // We always assume that the input and output share a common origin of 0.
     //
@@ -110,11 +109,11 @@ void notch_calibrate(const float in_points_x[], const float in_points_y[],
         pointsIn[2][1] = 1;
         pointsIn[2][2] = 1;
         pointsOut[0][0] = 0;
-        pointsOut[0][1] = (float)notch_points_x[cur];
-        pointsOut[0][2] = (float)notch_points_x[next];
+        pointsOut[0][1] = notch_points_x[cur];
+        pointsOut[0][2] = notch_points_x[next];
         pointsOut[1][0] = 0;
-        pointsOut[1][1] = (float)notch_points_y[cur];
-        pointsOut[1][2] = (float)notch_points_y[next];
+        pointsOut[1][1] = notch_points_y[cur];
+        pointsOut[1][2] = notch_points_y[next];
         pointsOut[2][0] = 1;
         pointsOut[2][1] = 1;
         pointsOut[2][2] = 1;
@@ -153,6 +152,6 @@ void notch_calibrate(const float in_points_x[], const float in_points_y[],
             calib_results->boundary_angles[cur] += M_PI * 2;
         }
         printf("Boundary angle for region %d: %f\n", cur,
-                    calib_results->boundary_angles[cur]);
+               calib_results->boundary_angles[cur]);
     }
 }

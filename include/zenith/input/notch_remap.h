@@ -3,12 +3,11 @@
 
 #include "zenith/input/stick.h"
 
-void notch_remap(const float x_in, const float y_in, float *x_out, float *y_out,
+void notch_remap(const ax_t x_in, const ax_t y_in, ax_t *x_out, ax_t *y_out,
                  const calib_results_t *calib_results);
 
-void notch_calibrate(const float in_points_x[], const float in_points_y[],
-                     const int8_t notch_points_x[],
-                     const int8_t notch_points_y[],
+void notch_calibrate(const ax_t in_points_x[], const ax_t in_points_y[],
+                     const ax_t notch_points_x[], const ax_t notch_points_y[],
                      calib_results_t *calib_results);
 
 #endif // ZENITH_NOTCH_REMAP_H

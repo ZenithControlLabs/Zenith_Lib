@@ -11,6 +11,8 @@ Public-facing API for Zenith.
 void cb_zenith_init_hardware(void);
 void cb_zenith_read_buttons(btn_data_t *buttons);
 void cb_zenith_read_analog(analog_data_t *analog_data);
+// if ZTH_SEPARATE_CAL_READ, calibration will use this instead to read analog
+void cb_zenith_read_analog_cal(analog_data_t *analog_data);
 
 // app callbacks
 void cb_zenith_core1_init(void);
