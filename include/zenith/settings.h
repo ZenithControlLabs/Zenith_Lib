@@ -5,8 +5,8 @@
 #include "zenith/input/btn_remap.h"
 #include "zenith/input/stick.h"
 
-// 256k from start of flash
-#define FLASH_OFFSET (256 * 1024)
+// 512k from start of flash
+#define FLASH_OFFSET (512 * 1024)
 
 // Not in the userland-accessible zenith_cfg.h file because
 // we control the settings struct.
