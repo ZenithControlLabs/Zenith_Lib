@@ -23,7 +23,7 @@ int usb_init(void) {
 int hid_report(btn_data_t *buttons, analog_data_t *analog,
                analog_data_t *analog_raw) {
     hid_gamepad_report_ext_t report = {.x = (int8_t)(analog->ax1 * 128.0),
-                                       .y = (int8_t)(analog->ax2 * 128.0),
+                                       .y = (int8_t)(analog->ax2 * -128.0),
                                        .z = (int8_t)(analog->ax3 * 128.0),
                                        .rx = (int8_t)(analog->ax4 * 128.0),
                                        .ry = (int8_t)(analog->ax5 * 128.0),
@@ -44,7 +44,6 @@ void usb_task(uint32_t timestamp, btn_data_t *buttons, analog_data_t *analog,
         if (tud_hid_ready()) {
             hid_report(buttons, analog, analog_raw);
         }
-        webusb_input_report();
     } else {
         _usb_clear = false;
     }
@@ -136,7 +135,7 @@ uint16_t const *tud_descriptor_string_cb(uint8_t index, uint16_t langid) {
 
 // Vendor Device Class CB for receiving data
 void tud_vendor_rx_cb(uint8_t itf) {
-    printf("WebUSB Data Received.\n");
+    debug_print("WebUSB Data Received.\n");
     uint8_t buffer[64] = {0};
     uint32_t size = 0;
     tud_vendor_n_read(itf, buffer, 64);
@@ -182,7 +181,7 @@ bool tud_vendor_control_xfer_cb(uint8_t rhport, uint8_t stage,
         break;
 
     case TUSB_REQ_TYPE_CLASS:
-        printf("Vendor Request: %x", request->bRequest);
+        debug_print("Vendor Request: %x", request->bRequest);
 
         // response with status OK
         return tud_control_status(rhport, request);

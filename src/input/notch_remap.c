@@ -68,14 +68,14 @@ void print_mtx(const float matrix[3][3]) {
     int i, j, nrow, ncol;
     nrow = 3;
     ncol = 3;
-    printf("\n");
+    debug_print("\n");
     for (i = 0; i < nrow; i++) {
         for (j = 0; j < ncol; j++) {
-            printf("%.6f, ", matrix[i][j]); // print 6 decimal places
+            debug_print("%.6f, ", matrix[i][j]); // print 6 decimal places
         }
-        printf("\n");
+        debug_print("\n");
     }
-    printf("\n");
+    debug_print("\n");
 }
 
 void notch_calibrate(const ax_t in_points_x[], const ax_t in_points_y[],
@@ -91,7 +91,7 @@ void notch_calibrate(const ax_t in_points_x[], const ax_t in_points_y[],
 
     // Loop through every region
     for (int cur = 0; cur < NUM_NOTCHES; cur++) {
-        //("calibration region %d\n", i);
+        // debug_print("calibration region %d\n", i);
 
         float pointsIn[3][3];
         float pointsOut[3][3];
@@ -124,7 +124,7 @@ void notch_calibrate(const ax_t in_points_x[], const ax_t in_points_y[],
         float A[3][3];
         matrix_matrix_mult(pointsOut, temp, A);
 
-        // printf("The transform matrix is:\n");
+        // debug_print("The transform matrix is:\n");
         // print_mtx(A);
 
         // Because we have assumed the two point regions to share 0 as the
@@ -151,7 +151,7 @@ void notch_calibrate(const ax_t in_points_x[], const ax_t in_points_y[],
             calib_results->boundary_angles[0]) {
             calib_results->boundary_angles[cur] += M_PI * 2;
         }
-        printf("Boundary angle for region %d: %f\n", cur,
-               calib_results->boundary_angles[cur]);
+        debug_print("Boundary angle for region %d: %f\n", cur,
+                    calib_results->boundary_angles[cur]);
     }
 }

@@ -129,86 +129,80 @@ static void _gamecube_isr_txdone(void) {
 
 void gamecube_comms_task(uint32_t timestamp, btn_data_t *buttons,
                          analog_data_t *analog) {
-    if (!_gc_running) {
-        sleep_ms(150);
-        _gamecube_offset = pio_add_program(GAMEPAD_PIO, &joybus_program);
-        _gamecube_irq = PIO1_IRQ_0;
-        _gamecube_irq_tx = PIO1_IRQ_1;
-
-        pio_set_irq0_source_enabled(GAMEPAD_PIO, pis_interrupt0, true);
-        pio_set_irq1_source_enabled(GAMEPAD_PIO, pis_interrupt1, true);
-
-        irq_set_exclusive_handler(_gamecube_irq, _gamecube_isr_handler);
-        irq_set_exclusive_handler(_gamecube_irq_tx, _gamecube_isr_txdone);
-        joybus_program_init(GAMEPAD_PIO, GAMEPAD_SM, _gamecube_offset,
-                            HOJA_SERIAL_PIN, &_gamecube_c);
-        irq_set_enabled(_gamecube_irq, true);
-        irq_set_enabled(_gamecube_irq_tx, true);
-        _gc_running = true;
+    if (interval_resettable_run(timestamp, 100000, _gc_got_data)) {
+        debug_print("RESET.");
+        _gamecube_reset_state();
     } else {
-        if (interval_resettable_run(timestamp, 40000, _gc_got_data)) {
-            printf("RESET.");
-            _gamecube_reset_state();
-            sleep_ms(100);
-        } else {
-            _gc_got_data = false;
-            _out_buffer.blank_2 = 1;
-            _out_buffer.button_a = buttons->s.b1;
-            _out_buffer.button_b = buttons->s.b2;
-            _out_buffer.button_x = buttons->s.b3;
-            _out_buffer.button_y = buttons->s.b4;
-            _out_buffer.button_start = buttons->s.b5;
-            _out_buffer.button_l = buttons->s.b6;
-            _out_buffer.button_r = buttons->s.b7;
-            _out_buffer.button_z = buttons->s.b8;
+        _gc_got_data = false;
+        _out_buffer.blank_2 = 1;
+        _out_buffer.button_a = buttons->s.b1;
+        _out_buffer.button_b = buttons->s.b2;
+        _out_buffer.button_x = buttons->s.b3;
+        _out_buffer.button_y = buttons->s.b4;
+        _out_buffer.button_start = buttons->s.b5;
+        _out_buffer.button_l = buttons->s.b6;
+        _out_buffer.button_r = buttons->s.b7;
+        _out_buffer.button_z = buttons->s.b8;
 
-            _out_buffer.stick_left_x = (int8_t)(analog->ax1 * 128.0) + 128.0;
-            _out_buffer.stick_left_y = (int8_t)(analog->ax2 * 128.0) + 128.0;
-            _out_buffer.stick_right_x = (int8_t)(analog->ax3 * 128.0) + 128.0;
-            _out_buffer.stick_right_y = (int8_t)(analog->ax4 * 128.0) + 128.0;
+        _out_buffer.stick_left_x = (int8_t)(analog->ax1 * 128.0) + 128.0;
+        _out_buffer.stick_left_y = (int8_t)(analog->ax2 * 128.0) + 128.0;
+        _out_buffer.stick_right_x = (int8_t)(analog->ax3 * 128.0) + 128.0;
+        _out_buffer.stick_right_y = (int8_t)(analog->ax4 * 128.0) + 128.0;
 
-            _out_buffer.dpad_down = buttons->s.b9;
-            _out_buffer.dpad_left = buttons->s.b10;
-            _out_buffer.dpad_right = buttons->s.b11;
-            _out_buffer.dpad_up = buttons->s.b12;
+        _out_buffer.dpad_down = buttons->s.b9;
+        _out_buffer.dpad_left = buttons->s.b10;
+        _out_buffer.dpad_right = buttons->s.b11;
+        _out_buffer.dpad_up = buttons->s.b12;
 
-            int outl = 0;
-            int outr = 0;
+        int outl = 0;
+        int outr = 0;
 
-            // TODO: add this back
-            /*
-            // Handle trigger SP stuff
-            switch (global_loaded_settings.gc_sp_mode) {
-            default:
-                _out_buffer.analog_trigger_l = buttons->trigger_zl ? 255 : 0;
-                _out_buffer.analog_trigger_r = buttons->trigger_zr ? 255 : 0;
-                break;
+        // TODO: add this back
+        /*
+        // Handle trigger SP stuff
+        switch (global_loaded_settings.gc_sp_mode) {
+        default:
+            _out_buffer.analog_trigger_l = buttons->trigger_zl ? 255 : 0;
+            _out_buffer.analog_trigger_r = buttons->trigger_zr ? 255 : 0;
+            break;
 
-            case GC_SP_MODE_LT:
-                outl = buttons->trigger_l ? (HOJA_ANALOG_LIGHT) : 0;
-                _out_buffer.analog_trigger_l = buttons->trigger_zl ? 255 : outl;
-                _out_buffer.analog_trigger_r = buttons->trigger_zr ? 255 : 0;
-                break;
+        case GC_SP_MODE_LT:
+            outl = buttons->trigger_l ? (HOJA_ANALOG_LIGHT) : 0;
+            _out_buffer.analog_trigger_l = buttons->trigger_zl ? 255 : outl;
+            _out_buffer.analog_trigger_r = buttons->trigger_zr ? 255 : 0;
+            break;
 
-            case GC_SP_MODE_RT:
-                outr = buttons->trigger_l ? (HOJA_ANALOG_LIGHT) : 0;
-                _out_buffer.analog_trigger_r = buttons->trigger_zr ? 255 : outr;
-                _out_buffer.analog_trigger_l = buttons->trigger_zl ? 255 : 0;
-                break;
+        case GC_SP_MODE_RT:
+            outr = buttons->trigger_l ? (HOJA_ANALOG_LIGHT) : 0;
+            _out_buffer.analog_trigger_r = buttons->trigger_zr ? 255 : outr;
+            _out_buffer.analog_trigger_l = buttons->trigger_zl ? 255 : 0;
+            break;
 
-            case GC_SP_MODE_ADC:
-                _out_buffer.analog_trigger_l = analog->lt >> 4;
-                _out_buffer.analog_trigger_r = analog->rt >> 4;
-                break;
-            }*/
-            _out_buffer.analog_trigger_l = (uint8_t)(analog->ax5 * 256.0);
-            _out_buffer.analog_trigger_r = (uint8_t)(analog->ax6 * 256.0);
-        }
+        case GC_SP_MODE_ADC:
+            _out_buffer.analog_trigger_l = analog->lt >> 4;
+            _out_buffer.analog_trigger_r = analog->rt >> 4;
+            break;
+        }*/
+        _out_buffer.analog_trigger_l = (uint8_t)(analog->ax5 * 256.0);
+        _out_buffer.analog_trigger_r = (uint8_t)(analog->ax6 * 256.0);
     }
 }
 
 void gamecube_init() {
+    _gamecube_offset = pio_add_program(GAMEPAD_PIO, &joybus_program);
+    _gamecube_irq = PIO1_IRQ_0;
+    _gamecube_irq_tx = PIO1_IRQ_1;
 
+    pio_set_irq0_source_enabled(GAMEPAD_PIO, pis_interrupt0, true);
+    pio_set_irq1_source_enabled(GAMEPAD_PIO, pis_interrupt1, true);
+
+    irq_set_exclusive_handler(_gamecube_irq, _gamecube_isr_handler);
+    irq_set_exclusive_handler(_gamecube_irq_tx, _gamecube_isr_txdone);
+    joybus_program_init(GAMEPAD_PIO, GAMEPAD_SM, _gamecube_offset,
+                        HOJA_SERIAL_PIN, &_gamecube_c);
+    irq_set_enabled(_gamecube_irq, true);
+    irq_set_enabled(_gamecube_irq_tx, true);
+    _gc_running = true;
     // joybus_set_in(false, GAMEPAD_PIO, GAMEPAD_SM, _gamecube_offset,
     // &_gamecube_c);
 }

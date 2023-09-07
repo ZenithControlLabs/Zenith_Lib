@@ -18,7 +18,6 @@ volatile static uint8_t _byteCount = 0;
 volatile uint8_t _crc_reply = 0;
 
 volatile bool _n64_got_data = false;
-bool _n64_running = false;
 
 uint8_t _n64_get_crc(uint8_t val) { return crc_repeating_table[val] ^ 0xFF; }
 
@@ -122,54 +121,50 @@ void _n64_reset_state() {
                   HOJA_SERIAL_PIN);
 }
 
+void n64_init() {
+    _n64_offset = pio_add_program(GAMEPAD_PIO, &joybus_program);
+    _n64_irq = PIO1_IRQ_0;
+    _n64_irq_tx = PIO1_IRQ_1;
+
+    pio_set_irq0_source_enabled(GAMEPAD_PIO, pis_interrupt0, true);
+    pio_set_irq1_source_enabled(GAMEPAD_PIO, pis_interrupt1, true);
+
+    irq_set_exclusive_handler(_n64_irq, _n64_isr_handler);
+    irq_set_exclusive_handler(_n64_irq_tx, _n64_isr_txdone);
+    joybus_program_init(GAMEPAD_PIO, GAMEPAD_SM, _n64_offset, HOJA_SERIAL_PIN,
+                        &_n64_c);
+    irq_set_enabled(_n64_irq, true);
+    irq_set_enabled(_n64_irq_tx, true);
+}
+
 void n64_comms_task(uint32_t timestamp, btn_data_t *buttons,
                     analog_data_t *analog) {
-    if (!_n64_running) {
-        sleep_ms(150);
-        _n64_offset = pio_add_program(GAMEPAD_PIO, &joybus_program);
-        _n64_irq = PIO1_IRQ_0;
-        _n64_irq_tx = PIO1_IRQ_1;
-
-        pio_set_irq0_source_enabled(GAMEPAD_PIO, pis_interrupt0, true);
-        pio_set_irq1_source_enabled(GAMEPAD_PIO, pis_interrupt1, true);
-
-        irq_set_exclusive_handler(_n64_irq, _n64_isr_handler);
-        irq_set_exclusive_handler(_n64_irq_tx, _n64_isr_txdone);
-        joybus_program_init(GAMEPAD_PIO, GAMEPAD_SM, _n64_offset,
-                            HOJA_SERIAL_PIN, &_n64_c);
-        irq_set_enabled(_n64_irq, true);
-        irq_set_enabled(_n64_irq_tx, true);
-        _n64_running = true;
+    if (interval_resettable_run(timestamp, 100000, _n64_got_data)) {
+        _n64_reset_state();
     } else {
-        if (interval_resettable_run(timestamp, 40000, _n64_got_data)) {
-            printf("RESET.");
-            _n64_reset_state();
-            sleep_ms(100);
-        } else {
-            _n64_got_data = false;
-            _out_buffer.button_a = buttons->s.b1;
-            _out_buffer.button_b = buttons->s.b2;
+        _n64_got_data = false;
+        _out_buffer.button_a = buttons->s.b1;
+        _out_buffer.button_b = buttons->s.b2;
 
-            _out_buffer.cpad_up = buttons->s.b3;
-            _out_buffer.cpad_down = buttons->s.b4;
+        _out_buffer.cpad_up = buttons->s.b3;
+        _out_buffer.cpad_down = buttons->s.b4;
 
-            _out_buffer.cpad_left = buttons->s.b5;
-            _out_buffer.cpad_right = buttons->s.b6;
+        _out_buffer.cpad_left = buttons->s.b5;
+        _out_buffer.cpad_right = buttons->s.b6;
 
-            _out_buffer.button_start = buttons->s.b7;
+        _out_buffer.button_start = buttons->s.b7;
 
-            _out_buffer.button_l = buttons->s.b8;
+        _out_buffer.button_l = buttons->s.b8;
 
-            _out_buffer.button_r = buttons->s.b9;
-            _out_buffer.button_z = buttons->s.b10;
+        _out_buffer.button_r = buttons->s.b9;
+        _out_buffer.button_z = buttons->s.b10;
 
-            _out_buffer.stick_x = (int8_t)(analog->ax1 * 128.0);
-            _out_buffer.stick_y = (int8_t)(analog->ax2 * 128.0);
+        _out_buffer.stick_x = (int8_t)(analog->ax1 * 128.0);
+        _out_buffer.stick_y = (int8_t)(analog->ax2 * 128.0);
 
-            _out_buffer.dpad_down = buttons->s.b11;
-            _out_buffer.dpad_left = buttons->s.b12;
-            _out_buffer.dpad_right = buttons->s.b13;
-            _out_buffer.dpad_up = buttons->s.b14;
-        }
+        _out_buffer.dpad_down = buttons->s.b11;
+        _out_buffer.dpad_left = buttons->s.b12;
+        _out_buffer.dpad_right = buttons->s.b13;
+        _out_buffer.dpad_up = buttons->s.b14;
     }
 }

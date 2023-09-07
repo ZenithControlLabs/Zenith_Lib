@@ -13,6 +13,7 @@
 #include <pico/bootrom.h>
 #include <hardware/pio.h>
 #include <hardware/clocks.h>
+#include <hardware/flash.h>
 #include <tusb.h>
 
 // local includes
@@ -24,6 +25,7 @@
 #include "zenith/settings.h" // Where the settings struct is held. Routines to write it to flash.
 
 #include "zenith/utilities/interval.h"
+#include "zenith/utilities/misc.h"
 
 #include "zenith/usb/tusb_config.h"
 #include "zenith/usb/descriptors.h"

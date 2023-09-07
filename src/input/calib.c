@@ -82,14 +82,15 @@ void calibration_advance(analog_data_t *in) {
 
     raw_cal_points_x[_cal_step - 1] = in->ax1;
     raw_cal_points_y[_cal_step - 1] = in->ax2;
-    printf("Raw X value collected: %f\nRaw Y value collected: %f\n", in->ax1,
-           in->ax2);
+    debug_print("Raw X value collected: %f\nRaw Y value collected: %f\n",
+                in->ax1, in->ax2);
     _cal_step++;
 
     if (_cal_step > CALIBRATION_NUM_STEPS) {
         calibration_finish();
     } else {
-        printf("Calibration Step [%d/%d]\n", _cal_step, CALIBRATION_NUM_STEPS);
+        debug_print("Calibration Step [%d/%d]\n", _cal_step,
+                    CALIBRATION_NUM_STEPS);
     }
 }
 
@@ -99,7 +100,7 @@ void calibration_undo(void) {
     if (_cal_step > 1) {
         _cal_step--;
     }
-    printf("Calibration Step [%d/%d]\n", _cal_step, CALIBRATION_NUM_STEPS);
+    debug_print("Calibration Step [%d/%d]\n", _cal_step, CALIBRATION_NUM_STEPS);
 }
 
 void calibration_finish(void) {
@@ -107,14 +108,14 @@ void calibration_finish(void) {
     ax_t cleaned_points_x[NUM_NOTCHES + 1];
     ax_t cleaned_points_y[NUM_NOTCHES + 1];
     for (int i = 0; i < CALIBRATION_NUM_STEPS; i++) {
-        printf("Raw Cal point:  %d; (x,y) = (%f, %f)\n", i, raw_cal_points_x[i],
-               raw_cal_points_y[i]);
+        debug_print("Raw Cal point:  %d; (x,y) = (%f, %f)\n", i,
+                    raw_cal_points_x[i], raw_cal_points_y[i]);
     }
     fold_center_points(raw_cal_points_x, raw_cal_points_y, cleaned_points_x,
                        cleaned_points_y);
     for (int i = 0; i <= NUM_NOTCHES; i++) {
-        printf("Clean Cal point:  %d; (x,y) = (%f, %f)\n", i,
-               cleaned_points_x[i], cleaned_points_y[i]);
+        debug_print("Clean Cal point:  %d; (x,y) = (%f, %f)\n", i,
+                    cleaned_points_x[i], cleaned_points_y[i]);
     }
 
 #if ZTH_LINEARIZATION_EN
@@ -128,45 +129,29 @@ void calibration_finish(void) {
     // Copy the linearized points we have just found to phobri's internal data
     // sturcture.
     for (int i = 0; i < NUM_NOTCHES; i++) {
-        _settings.stick_config.linearized_points_x[i] = linearized_points_x[i];
-        _settings.stick_config.linearized_points_y[i] = linearized_points_y[i];
-        printf("Linearized point:  %d; (x,y) = (%f, %f)\n", i,
-               linearized_points_x[i], linearized_points_y[i]);
+        _settings.calib_results.notch_points_x_in[i] = linearized_points_x[i];
+        _settings.calib_results.notch_points_y_in[i] = linearized_points_y[i];
+        debug_print("Linearized point:  %d; (x,y) = (%f, %f)\n", i,
+                    linearized_points_x[i], linearized_points_y[i]);
     }
-
-    ax_t *notch_cal_in_points_x = linearized_points_x;
-    ax_t *notch_cal_in_points_y = linearized_points_y;
 #else
     // Linearization normally moves the center point to an implicit 0,0.
     // To carry forth the assumption for notch calibration, we will do the same.
-    ax_t notch_cal_in_points_x[NUM_NOTCHES];
-    ax_t notch_cal_in_points_y[NUM_NOTCHES];
-
     for (int i = 0; i < NUM_NOTCHES; i++) {
-        notch_cal_in_points_x[i] =
+        _settings.calib_results.notch_points_x_in[i] =
             cleaned_points_x[i + 1] - cleaned_points_x[0];
-        notch_cal_in_points_y[i] =
+        _settings.calib_results.notch_points_y_in[i] =
             cleaned_points_y[i + 1] - cleaned_points_y[0];
     }
-
 #endif // ZTH_LINEARIZATON_EN
 
-    // Center is ommitted here because it is assumed to be 0.
-    // The offset to ensure this is true takes place in the linearization step.
-    static const ax_t perfect_notches_x[] = {
-        INT_N_TO_AX(85, 8),  INT_N_TO_AX(70, 8),  INT_N_TO_AX(0, 8),
-        INT_N_TO_AX(-70, 8), INT_N_TO_AX(-85, 8), INT_N_TO_AX(-70, 8),
-        INT_N_TO_AX(0, 8),   INT_N_TO_AX(70, 8)};
-    static const ax_t perfect_notches_y[] = {
-        INT_N_TO_AX(0, 8),   INT_N_TO_AX(70, 8), INT_N_TO_AX(85, 8),
-        INT_N_TO_AX(70, 8),  INT_N_TO_AX(0, 8),  INT_N_TO_AX(-70, 8),
-        INT_N_TO_AX(-85, 8), INT_N_TO_AX(-70, 8)};
-
-    notch_calibrate(notch_cal_in_points_x, notch_cal_in_points_y,
-                    perfect_notches_x, perfect_notches_y,
+    notch_calibrate(_settings.calib_results.notch_points_x_in,
+                    _settings.calib_results.notch_points_y_in,
+                    _settings.stick_config.notch_points_x,
+                    _settings.stick_config.notch_points_y,
                     &(_settings.calib_results));
-    printf("Calibrated!\n");
-    /*printf("X coeffs: %f %f %f %f, Y coeffs: %f %f %f %f\n",
+    debug_print("Calibrated!\n");
+    /*debug_print("X coeffs: %f %f %f %f, Y coeffs: %f %f %f %f\n",
            _settings.calib_results.fit_coeffs_x[0],
            _settings.calib_results.fit_coeffs_x[1],
            _settings.calib_results.fit_coeffs_x[2],

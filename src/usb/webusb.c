@@ -5,7 +5,7 @@ bool _webusb_output_enabled = false;
 int _webusb_output_cnt = 0;
 
 void webusb_save_confirm() {
-    printf("Sending Save receipt...\n");
+    debug_print("Sending Save receipt...\n");
     memset(_webusb_out_buffer, 0, 64);
     _webusb_out_buffer[0] = 0xF1;
     tud_vendor_n_write(0, _webusb_out_buffer, 64);
@@ -22,7 +22,7 @@ bool webusb_ready_blocking(int timeout) {
         }
 
         if (!internal) {
-            printf("Disabling webusb output..\n");
+            debug_print("Disabling webusb output..\n");
             _webusb_output_enabled = false;
             return false;
         }
@@ -38,14 +38,6 @@ bool webusb_ready_blocking(int timeout) {
 void webusb_command_processor(uint8_t *data) {
     _webusb_output_enabled = true;
     switch (data[0]) {
-    default:
-
-        break;
-
-    case WEBUSB_CMD_FW_SET: {
-        reset_usb_boot(0, 0);
-    } break;
-
     case WEBUSB_CMD_FW_GET: {
         _webusb_out_buffer[0] = WEBUSB_CMD_FW_GET;
         _webusb_out_buffer[1] = (ZTH_FW_MINOR << 8) | (ZTH_FW_PATCH & 0xFF);
@@ -58,11 +50,11 @@ void webusb_command_processor(uint8_t *data) {
     } break;
 
     case WEBUSB_CMD_CALIBRATION_START: {
-        printf("WebUSB: Got calibration START command.\n");
+        debug_print("WebUSB: Got calibration START command.\n");
         if (_cal_step < 1) {
             _cal_step = 1;
-            printf("Starting calibration!\nCalibration Step [%d/%d]\n",
-                   _cal_step, CALIBRATION_NUM_STEPS);
+            debug_print("Starting calibration!\nCalibration Step [%d/%d]\n",
+                        _cal_step, CALIBRATION_NUM_STEPS);
         }
         _webusb_out_buffer[0] = WEBUSB_CMD_CALIBRATION_START;
 
@@ -70,7 +62,8 @@ void webusb_command_processor(uint8_t *data) {
 
     case WEBUSB_CMD_CALIBRATION_ADVANCE: {
         _cal_msg = CALIB_ADVANCE;
-        printf("WebUSB: Got calibration ADVANCE command. (msg=%d)\n", _cal_msg);
+        debug_print("WebUSB: Got calibration ADVANCE command. (msg=%d)\n",
+                    _cal_msg);
         _webusb_out_buffer[0] = WEBUSB_CMD_CALIBRATION_ADVANCE;
         if (webusb_ready_blocking(5000)) {
             tud_vendor_n_write(0, _webusb_out_buffer, 64);
@@ -79,7 +72,7 @@ void webusb_command_processor(uint8_t *data) {
     } break;
 
     case WEBUSB_CMD_CALIBRATION_UNDO: {
-        printf("WebUSB: Got calibration UNDO command.\n");
+        debug_print("WebUSB: Got calibration UNDO command.\n");
         _cal_msg = CALIB_UNDO;
         _webusb_out_buffer[0] = WEBUSB_CMD_CALIBRATION_UNDO;
         if (webusb_ready_blocking(5000)) {
@@ -89,10 +82,10 @@ void webusb_command_processor(uint8_t *data) {
     } break;
 
     case WEBUSB_CMD_NOTCH_SET: {
-        printf("WebUSB: Got notch point SET command.\n");
+        debug_print("WebUSB: Got notch point SET command.\n");
         uint8_t notch = data[1];
         if (notch > NUM_NOTCHES) {
-            printf("Notch out of range?\n");
+            debug_print("Notch out of range?\n");
             break;
         }
         _settings.stick_config.notch_points_x[notch] =
@@ -100,14 +93,14 @@ void webusb_command_processor(uint8_t *data) {
         _settings.stick_config.notch_points_y[notch] =
             INT_N_TO_AX((int8_t)data[3], 8);
         // recompute notch calibration
-        notch_calibrate(_settings.stick_config.linearized_points_x,
-                        _settings.stick_config.linearized_points_y,
+        notch_calibrate(_settings.calib_results.notch_points_x_in,
+                        _settings.calib_results.notch_points_y_in,
                         _settings.stick_config.notch_points_x,
                         _settings.stick_config.notch_points_y,
                         &(_settings.calib_results));
     } break;
     case WEBUSB_CMD_NOTCHES_GET: {
-        printf("WebUSB: Got notch points GET command.\n");
+        debug_print("WebUSB: Got notch points GET command.\n");
         _webusb_out_buffer[0] = WEBUSB_CMD_NOTCHES_GET;
         for (int i = 0; i < NUM_NOTCHES; i++) {
             _webusb_out_buffer[i * 2 + 1] =
@@ -122,39 +115,60 @@ void webusb_command_processor(uint8_t *data) {
     } break;
 
     case WEBUSB_CMD_REMAP_SET: {
-        printf("WebUSB: Got Remap SET command.\n");
+        debug_print("WebUSB: Got Remap SET command.\n");
+        comms_mode_t c = (comms_mode_t)data[1];
+        uint8_t btn = data[2];
+        uint8_t bind = data[3];
+        switch (c) {
+        case COMMS_MODE_N64: {
+            _settings.btn_remap_profile_n64.p[btn] = bind;
+        }
+        case COMMS_MODE_GAMECUBE: {
+            _settings.btn_remap_profile_gamecube.p[btn] = bind;
+            break;
+        }
+        }
         // remap_listen_enable(data[1], data[2]);
     } break;
     case WEBUSB_CMD_REMAP_GET: {
-        printf("WebUSB: Got Remap GET command.\n");
-        // remap_send_data_webusb(data[1]);
+        debug_print("WebUSB: Got Remap GET command.\n");
+        _webusb_out_buffer[0] = WEBUSB_CMD_REMAP_GET;
+        _webusb_out_buffer[1] = data[1];
+        comms_mode_t c = (comms_mode_t)data[1];
+        switch (c) {
+        case COMMS_MODE_N64: {
+            memcpy(_webusb_out_buffer + 2, _settings.btn_remap_profile_n64.p,
+                   32);
+            break;
+        }
+        case COMMS_MODE_GAMECUBE: {
+            memcpy(_webusb_out_buffer + 2,
+                   _settings.btn_remap_profile_gamecube.p, 32);
+            break;
+        }
+        }
+        if (webusb_ready_blocking(5000)) {
+            tud_vendor_n_write(0, _webusb_out_buffer, 64);
+            tud_vendor_n_flush(0);
+        }
     } break;
 
+    case WEBUSB_CMD_UPDATE_FW: {
+        reset_usb_boot(0, 0);
+    } break;
     case WEBUSB_CMD_COMMIT_SETTINGS: {
-        printf("WebUSB: Got commit settings command.\n");
-        // settings_save_webindicate();
-        // settings_save();
+        debug_print("WebUSB: Got commit settings command.\n");
+        settings_inform_commit();
     } break;
-    case WEBUSB_CMD_RESET_FACTORY: {
-        printf("WebUSB: Got reset settings to factory command.\n");
-        // settings_reset_factory();
+    case WEBUSB_CMD_RESET_SETTINGS: {
+        debug_print("WebUSB: Got reset settings to factory command.\n");
+        settings_reset_to_factory();
     } break;
+    default: {
+        debug_print(
+            "welp. i guess we are taking the default case (data[0]=%d)\n",
+            data[0]);
+        break;
     }
-}
-
-void webusb_input_report(uint32_t timestamp) {
-    uint8_t report_buf[64];
-    if (!interval_run(timestamp, ZTH_WEBUSB_INTERVAL))
-        return;
-
-    report_buf[0] = WEBUSB_INPUT_REPORT_GET;
-    report_buf[1] = AX_TO_INT8(_analog_data_processed.ax1);
-    report_buf[2] = AX_TO_INT8(_analog_data_processed.ax2);
-    memcpy(report_buf + 4, &_analog_data.ax1, sizeof(ax_t));
-    memcpy(report_buf + 4 + sizeof(ax_t), &_analog_data.ax2, sizeof(ax_t));
-
-    if (webusb_ready_blocking(5000)) {
-        tud_vendor_n_write(0, report_buf, 64);
-        tud_vendor_n_flush(0);
     }
 }

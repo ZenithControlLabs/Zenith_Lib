@@ -58,4 +58,14 @@
 #define ZTH_WEBUSB_INTERVAL 16000
 #endif
 
+#ifndef ZTH_N64_REMAP_DEFAULT
+#define ZTH_N64_REMAP_DEFAULT                                                  \
+    { 0 }
+#endif
+
+#ifndef ZTH_GAMECUBE_REMAP_DEFAULT
+#define ZTH_GAMECUBE_REMAP_DEFAULT                                             \
+    { 0 }
+#endif
+
 #endif // ZENITH_CFG_DEF_H

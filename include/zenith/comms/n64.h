@@ -37,6 +37,8 @@ typedef struct {
     int8_t stick_y;
 } __attribute__((packed)) n64_input_t;
 
+void n64_init();
+
 void n64_comms_task(uint32_t timestamp, btn_data_t *buttons,
                     analog_data_t *analog);
 
