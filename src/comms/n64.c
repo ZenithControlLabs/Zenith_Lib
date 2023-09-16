@@ -33,15 +33,11 @@ static void __not_in_flash_func(rx_fifo_not_empty_handler)(void) {
                     false); // disable RX interrupts. we do not care what
                             // happens on the bus now since we have control.
 
-    // Copying this data is a critical section.
-    // However, this is an ISR. We don't want to block here forever.
-    // TODO: move this to block_until, leaving it as blocking for now so I can
-    // debug
-    // mutex_enter_blocking(&_report_lock);
+    // TODO: put a mutex here?
+    // since accessing the report struct is not atomic
     for (int i = 0; i < len; i++) {
         _bytes[i] = resp[i];
     }
-    // mutex_exit(&_report_lock);
 
     _len = len;
     irq_set_enabled(
@@ -110,7 +106,7 @@ uint joybus_port_init(joybus_port_t *port, uint pin, PIO pio, int sm,
 
 void joybus_init_comms(void) {
     // We are just going to claim PIO0
-    joybus_port_init(&port, HOJA_SERIAL_PIN, pio0, -1, -1);
+    joybus_port_init(&port, ZENITH_SERIAL_PIN, pio0, -1, -1);
     irq_set_enabled(
         PIO0_IRQ_0,
         true); // we want to be interrupted as soon as new byte is ready

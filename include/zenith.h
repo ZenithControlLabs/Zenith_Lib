@@ -18,7 +18,10 @@ void cb_zenith_read_analog_cal(analog_data_t *analog_data);
 void cb_zenith_core1_init(void);
 void cb_zenith_core0_inject(void);
 void cb_zenith_core1_inject(void);
+bool cb_zenith_user_webusb_cmd(uint8_t *in, uint8_t *out);
+void cb_zenith_user_settings_reset(uint8_t *data);
 
+uint8_t *zenith_get_user_settings_ptr(void);
 void zenith_start(void);
 
 #endif // ZENITH_H

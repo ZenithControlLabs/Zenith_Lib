@@ -25,6 +25,8 @@ typedef enum {
     WEBUSB_CMD_RESET_SETTINGS = 0xF3
 } webusb_cmd_t;
 
+#define WEBUSB_CMD_USER_MASK 0b01100000
+
 // defining for access to stick data through WebUSB
 extern analog_data_t _analog_data;
 extern analog_data_t _analog_data_processed;

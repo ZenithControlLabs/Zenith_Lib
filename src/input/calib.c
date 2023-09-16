@@ -1,8 +1,7 @@
 #include "zenith/includes.h"
 
 volatile int _cal_step = 0;
-// TODO: mark as atomic
-volatile cal_msg_t _cal_msg;
+volatile _Atomic cal_msg_t _cal_msg;
 ax_t raw_cal_points_x[CALIBRATION_NUM_STEPS];
 ax_t raw_cal_points_y[CALIBRATION_NUM_STEPS];
 
