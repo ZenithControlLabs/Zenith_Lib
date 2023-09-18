@@ -1,6 +1,7 @@
 #ifndef ZENITH_N64_H
 #define ZENITH_N64_H
 
+#include "zenith/types.h"
 #include "zenith/utilities/interval.h"
 #include <stdint.h>
 

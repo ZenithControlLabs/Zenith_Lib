@@ -38,7 +38,7 @@ bool webusb_ready_blocking(int timeout) {
 void webusb_command_processor(uint8_t *data) {
     _webusb_output_enabled = true;
 
-    if (data[0] & WEBUSB_CMD_USER_MASK) {
+    if ((data[0] & WEBUSB_CMD_USER_MASK) == WEBUSB_CMD_USER_VAL) {
         bool perform_write =
             cb_zenith_user_webusb_cmd(data, _webusb_out_buffer);
         if (perform_write && webusb_ready_blocking(5000)) {
