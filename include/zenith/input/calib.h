@@ -8,7 +8,7 @@
 extern volatile int _cal_step;
 
 typedef enum { CALIB_NONE, CALIB_ADVANCE, CALIB_UNDO } cal_msg_t;
-extern volatile cal_msg_t _cal_msg;
+extern volatile _Atomic cal_msg_t _cal_msg;
 
 void calibration_advance(analog_data_t *in);
 

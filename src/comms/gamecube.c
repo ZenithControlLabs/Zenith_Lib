@@ -61,7 +61,7 @@ void _gamecube_send_poll() {
 
 void _gamecube_reset_state() {
     joybus_set_in(true, GAMEPAD_PIO, GAMEPAD_SM, _gamecube_offset, &_gamecube_c,
-                  HOJA_SERIAL_PIN);
+                  ZENITH_SERIAL_PIN);
 }
 
 static volatile uint8_t _byteCounter = 3;
@@ -77,7 +77,7 @@ void __time_critical_func(_gamecube_command_handler)() {
             while (c--)
                 asm("nop");
             joybus_set_in(false, GAMEPAD_PIO, GAMEPAD_SM, _gamecube_offset,
-                          &_gamecube_c, HOJA_SERIAL_PIN);
+                          &_gamecube_c, ZENITH_SERIAL_PIN);
             _gamecube_send_poll();
         }
     } else {
@@ -89,7 +89,7 @@ void __time_critical_func(_gamecube_command_handler)() {
             while (c--)
                 asm("nop");
             joybus_set_in(false, GAMEPAD_PIO, GAMEPAD_SM, _gamecube_offset,
-                          &_gamecube_c, HOJA_SERIAL_PIN);
+                          &_gamecube_c, ZENITH_SERIAL_PIN);
             _gamecube_send_probe();
             break;
 
@@ -101,7 +101,7 @@ void __time_critical_func(_gamecube_command_handler)() {
             while (c--)
                 asm("nop");
             joybus_set_in(false, GAMEPAD_PIO, GAMEPAD_SM, _gamecube_offset,
-                          &_gamecube_c, HOJA_SERIAL_PIN);
+                          &_gamecube_c, ZENITH_SERIAL_PIN);
             _gamecube_send_origin();
             break;
         }
@@ -123,7 +123,7 @@ static void _gamecube_isr_txdone(void) {
     if (pio_interrupt_get(GAMEPAD_PIO, 1)) {
         pio_interrupt_clear(GAMEPAD_PIO, 1);
         joybus_set_in(true, GAMEPAD_PIO, GAMEPAD_SM, _gamecube_offset,
-                      &_gamecube_c, HOJA_SERIAL_PIN);
+                      &_gamecube_c, ZENITH_SERIAL_PIN);
     }
 }
 
@@ -199,7 +199,7 @@ void gamecube_init() {
     irq_set_exclusive_handler(_gamecube_irq, _gamecube_isr_handler);
     irq_set_exclusive_handler(_gamecube_irq_tx, _gamecube_isr_txdone);
     joybus_program_init(GAMEPAD_PIO, GAMEPAD_SM, _gamecube_offset,
-                        HOJA_SERIAL_PIN, &_gamecube_c);
+                        ZENITH_SERIAL_PIN, &_gamecube_c);
     irq_set_enabled(_gamecube_irq, true);
     irq_set_enabled(_gamecube_irq_tx, true);
     _gc_running = true;

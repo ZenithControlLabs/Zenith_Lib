@@ -38,9 +38,9 @@ void zenith_loop_core1(void) {
 }
 
 void zenith_start() {
-    cb_zenith_init_hardware();
-
     settings_load();
+
+    cb_zenith_init_hardware();
 
     usb_init();
 

@@ -16,7 +16,7 @@ target_sources(zenith_lib INTERFACE
   ${CMAKE_CURRENT_LIST_DIR}/src/input/stick.c 
 
   ${CMAKE_CURRENT_LIST_DIR}/src/comms/comms.c 
-  ${CMAKE_CURRENT_LIST_DIR}/src/comms/gamecube.c 
+#  ${CMAKE_CURRENT_LIST_DIR}/src/comms/gamecube.c 
   ${CMAKE_CURRENT_LIST_DIR}/src/comms/n64.c 
 )
 

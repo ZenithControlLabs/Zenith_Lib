@@ -1,170 +1,146 @@
 #include "zenith/includes.h"
 
-#define CLAMP_0_255(value) ((value) < 0 ? 0 : ((value) > 255 ? 255 : (value)))
-#define ALIGNED_JOYBUS_8(val) ((val) << 24)
-#define N64_RANGE 90
-#define N64_RANGE_MULTIPLIER (N64_RANGE * 2) / 4095
+#include "joybus.pio.h"
 
-uint _n64_irq;
-uint _n64_irq_tx;
-uint _n64_offset;
-pio_sm_config _n64_c;
+joybus_port_t port;
+
+// These are shared between RX and TX ISRs.
+volatile absolute_time_t _receive_end;
+volatile uint8_t _bytes[8];
+volatile uint8_t _len;
 
 static n64_input_t _out_buffer = {.stick_x = 0, .stick_y = 0};
-static uint8_t _in_buffer[64] = {0};
 
-volatile static uint8_t _workingCmd = 0x00;
-volatile static uint8_t _byteCount = 0;
-volatile uint8_t _crc_reply = 0;
+static void __not_in_flash_func(rx_fifo_not_empty_handler)(void) {
+    uint8_t *resp;
+    uint8_t len;
+    uint8_t packet = pio_sm_get_blocking((&port)->pio, (&port)->sm);
 
-volatile bool _n64_got_data = false;
-
-uint8_t _n64_get_crc(uint8_t val) { return crc_repeating_table[val] ^ 0xFF; }
-
-void _n64_send_probe() {
-    pio_sm_put_blocking(GAMEPAD_PIO, GAMEPAD_SM, ALIGNED_JOYBUS_8(0x05));
-    pio_sm_put_blocking(GAMEPAD_PIO, GAMEPAD_SM, 0);
-    pio_sm_put_blocking(GAMEPAD_PIO, GAMEPAD_SM, 0);
-}
-
-void _n64_send_pak_write() {
-    pio_sm_put_blocking(GAMEPAD_PIO, GAMEPAD_SM, ALIGNED_JOYBUS_8(_crc_reply));
-}
-
-void _n64_send_poll() {
-    pio_sm_put_blocking(GAMEPAD_PIO, GAMEPAD_SM,
-                        ALIGNED_JOYBUS_8(_out_buffer.buttons_1));
-    pio_sm_put_blocking(GAMEPAD_PIO, GAMEPAD_SM,
-                        ALIGNED_JOYBUS_8(_out_buffer.buttons_2));
-    pio_sm_put_blocking(GAMEPAD_PIO, GAMEPAD_SM,
-                        ALIGNED_JOYBUS_8(_out_buffer.stick_x));
-    pio_sm_put_blocking(GAMEPAD_PIO, GAMEPAD_SM,
-                        ALIGNED_JOYBUS_8(_out_buffer.stick_y));
-}
-
-#define PAK_MSG_BYTES 36
-
-void __time_critical_func(_n64_command_handler)() {
-    uint16_t c = 40;
-    if (_workingCmd == 0x03) {
-        _in_buffer[_byteCount] = pio_sm_get(GAMEPAD_PIO, GAMEPAD_SM);
-
-        if (_byteCount == 3) {
-            // Calculate response CRC
-            _crc_reply = _n64_get_crc(_in_buffer[3]);
-        }
-
-        _byteCount++;
-        if (_byteCount == PAK_MSG_BYTES) {
-            _workingCmd = 0;
-            _byteCount = 0;
-            while (c--)
-                asm("nop");
-            joybus_set_in(false, GAMEPAD_PIO, GAMEPAD_SM, _n64_offset, &_n64_c,
-                          HOJA_SERIAL_PIN);
-            _n64_send_pak_write();
-        }
+    if (packet == PROBE || packet == RESET) {
+        resp = (uint8_t *)&default_n64_status;
+        len = sizeof(n64_status_t);
+    } else if (packet == POLL) {
+        resp = (uint8_t *)&_out_buffer;
+        len = sizeof(n64_input_t);
     } else {
-        _workingCmd = pio_sm_get(GAMEPAD_PIO, GAMEPAD_SM);
+        // don't care. it's not a valid packet, we're not going to treat it as
+        // such
+        return;
+    }
 
-        switch (_workingCmd) {
-        default:
-            break;
+    _receive_end = make_timeout_time_us(4);
+    irq_set_enabled(PIO0_IRQ_0,
+                    false); // disable RX interrupts. we do not care what
+                            // happens on the bus now since we have control.
 
-        // Write to mem pak
-        case 0x03:
-            _byteCount = 1;
-            break;
+    // TODO: put a mutex here?
+    // since accessing the report struct is not atomic
+    for (int i = 0; i < len; i++) {
+        _bytes[i] = resp[i];
+    }
 
-        case 0xFF:
-        case 0x00:
-            while (c--)
-                asm("nop");
-            joybus_set_in(false, GAMEPAD_PIO, GAMEPAD_SM, _n64_offset, &_n64_c,
-                          HOJA_SERIAL_PIN);
-            _n64_send_probe();
-            break;
+    _len = len;
+    irq_set_enabled(
+        PIO0_IRQ_1,
+        true); // ok now enable TX interrupts, we need to fill the TX queue
+    joybus_program_send_init((&port)->pio, (&port)->sm, (&port)->offset,
+                             (&port)->pin, &(&port)->config);
+}
 
-        // Poll
-        case 0x01:
-            while (c--)
-                asm("nop");
-            joybus_set_in(false, GAMEPAD_PIO, GAMEPAD_SM, _n64_offset, &_n64_c,
-                          HOJA_SERIAL_PIN);
-            _n64_send_poll();
+static void __not_in_flash_func(tx_fifo_empty_handler)(void) {
+    // Can't do anything until our waiting period is up.
+    // Yes this blocks the system.
+    static int _ind = 0;
+
+    while (!time_reached(_receive_end)) {
+        tight_loop_contents();
+    }
+
+    uint8_t byte;
+    bool stop;
+    for (; _ind < _len; _ind++) {
+
+        byte = _bytes[_ind];
+        stop = _ind == _len - 1;
+        uint32_t data_shifted = (byte << 24) | (stop << 23);
+        pio_sm_put_blocking((&port)->pio, (&port)->sm, data_shifted);
+
+        if (pio_sm_is_tx_fifo_full((&port)->pio, (&port)->sm)) {
+            // our job here is done
             break;
         }
     }
-}
 
-static void _n64_isr_handler(void) {
-    if (pio_interrupt_get(GAMEPAD_PIO, 0)) {
-        _n64_got_data = true;
-        pio_interrupt_clear(GAMEPAD_PIO, 0);
-        uint16_t c = 40;
-        while (c--)
-            asm("nop");
-        _n64_command_handler();
+    if (_ind == _len) {
+        // we are officially done transferring, since there is nothing left in
+        // our queue (software side)
+        _ind = 0;
+        irq_set_enabled(PIO0_IRQ_1, false); // disable TX
+        irq_set_enabled(PIO0_IRQ_0, true);  // re-enable RX interrupts
     }
 }
 
-static void _n64_isr_txdone(void) {
-    if (pio_interrupt_get(GAMEPAD_PIO, 1)) {
-        pio_interrupt_clear(GAMEPAD_PIO, 1);
-        joybus_set_in(true, GAMEPAD_PIO, GAMEPAD_SM, _n64_offset, &_n64_c,
-                      HOJA_SERIAL_PIN);
+uint joybus_port_init(joybus_port_t *port, uint pin, PIO pio, int sm,
+                      int offset) {
+    if (sm < 0) {
+        sm = pio_claim_unused_sm(pio, true);
+    } else {
+        pio_sm_claim(pio, sm);
     }
+
+    if (offset < 0) {
+        offset = pio_add_program(pio, &joybus_program);
+    }
+
+    port->pin = pin;
+    port->pio = pio;
+    port->sm = sm;
+    port->offset = offset;
+    port->config = joybus_program_get_config(pio, sm, offset, pin);
+
+    joybus_program_receive_init(port->pio, port->sm, port->offset, port->pin,
+                                &port->config);
+
+    return offset;
 }
 
-void _n64_reset_state() {
-    joybus_set_in(true, GAMEPAD_PIO, GAMEPAD_SM, _n64_offset, &_n64_c,
-                  HOJA_SERIAL_PIN);
+void joybus_init_comms(void) {
+    // We are just going to claim PIO0
+    joybus_port_init(&port, ZENITH_SERIAL_PIN, pio0, -1, -1);
+    irq_set_enabled(
+        PIO0_IRQ_0,
+        true); // we want to be interrupted as soon as new byte is ready
+    irq_set_enabled(PIO0_IRQ_1, false); // not ready for that yet
+
+    irq_set_exclusive_handler(PIO0_IRQ_0, rx_fifo_not_empty_handler);
+    irq_set_exclusive_handler(PIO0_IRQ_1, tx_fifo_empty_handler);
 }
 
-void n64_init() {
-    _n64_offset = pio_add_program(GAMEPAD_PIO, &joybus_program);
-    _n64_irq = PIO1_IRQ_0;
-    _n64_irq_tx = PIO1_IRQ_1;
-
-    pio_set_irq0_source_enabled(GAMEPAD_PIO, pis_interrupt0, true);
-    pio_set_irq1_source_enabled(GAMEPAD_PIO, pis_interrupt1, true);
-
-    irq_set_exclusive_handler(_n64_irq, _n64_isr_handler);
-    irq_set_exclusive_handler(_n64_irq_tx, _n64_isr_txdone);
-    joybus_program_init(GAMEPAD_PIO, GAMEPAD_SM, _n64_offset, HOJA_SERIAL_PIN,
-                        &_n64_c);
-    irq_set_enabled(_n64_irq, true);
-    irq_set_enabled(_n64_irq_tx, true);
-}
+void n64_init() { joybus_init_comms(); }
 
 void n64_comms_task(uint32_t timestamp, btn_data_t *buttons,
                     analog_data_t *analog) {
-    if (interval_resettable_run(timestamp, 100000, _n64_got_data)) {
-        _n64_reset_state();
-    } else {
-        _n64_got_data = false;
-        _out_buffer.button_a = buttons->s.b1;
-        _out_buffer.button_b = buttons->s.b2;
+    _out_buffer.button_a = buttons->s.b1;
+    _out_buffer.button_b = buttons->s.b2;
 
-        _out_buffer.cpad_up = buttons->s.b3;
-        _out_buffer.cpad_down = buttons->s.b4;
+    _out_buffer.cpad_up = buttons->s.b3;
+    _out_buffer.cpad_down = buttons->s.b4;
 
-        _out_buffer.cpad_left = buttons->s.b5;
-        _out_buffer.cpad_right = buttons->s.b6;
+    _out_buffer.cpad_left = buttons->s.b5;
+    _out_buffer.cpad_right = buttons->s.b6;
 
-        _out_buffer.button_start = buttons->s.b7;
+    _out_buffer.button_start = buttons->s.b7;
 
-        _out_buffer.button_l = buttons->s.b8;
+    _out_buffer.button_l = buttons->s.b8;
 
-        _out_buffer.button_r = buttons->s.b9;
-        _out_buffer.button_z = buttons->s.b10;
+    _out_buffer.button_r = buttons->s.b9;
+    _out_buffer.button_z = buttons->s.b10;
 
-        _out_buffer.stick_x = (int8_t)(analog->ax1 * 128.0);
-        _out_buffer.stick_y = (int8_t)(analog->ax2 * 128.0);
+    _out_buffer.stick_x = (int8_t)(analog->ax1 * 128.0);
+    _out_buffer.stick_y = (int8_t)(analog->ax2 * 128.0);
 
-        _out_buffer.dpad_down = buttons->s.b11;
-        _out_buffer.dpad_left = buttons->s.b12;
-        _out_buffer.dpad_right = buttons->s.b13;
-        _out_buffer.dpad_up = buttons->s.b14;
-    }
+    _out_buffer.dpad_down = buttons->s.b11;
+    _out_buffer.dpad_left = buttons->s.b12;
+    _out_buffer.dpad_right = buttons->s.b13;
+    _out_buffer.dpad_up = buttons->s.b14;
 }

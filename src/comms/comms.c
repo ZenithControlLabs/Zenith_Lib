@@ -6,7 +6,7 @@ void comms_init() {
         n64_init();
     } break;
     case COMMS_MODE_GAMECUBE: {
-        gamecube_init();
+        // gamecube_init();
     } break;
     }
 }
@@ -18,7 +18,7 @@ void comms_task(uint32_t timestamp, btn_data_t *buttons,
         n64_comms_task(timestamp, buttons, analog);
     } break;
     case COMMS_MODE_GAMECUBE: {
-        gamecube_comms_task(timestamp, buttons, analog);
+        // gamecube_comms_task(timestamp, buttons, analog);
     } break;
     }
 }

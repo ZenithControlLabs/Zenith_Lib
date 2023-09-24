@@ -26,9 +26,9 @@ void stick_task(analog_data_t *in, analog_data_t *out) {
         // The WebUSB task sends us a message through this variable
         // indicating when we will advance or undo a calibration step
         // We read and then clear the message flag to indicate that it is read.
-        switch (_cal_msg) {
+        switch (atomic_load(&_cal_msg)) {
         case CALIB_ADVANCE: {
-            _cal_msg = CALIB_NONE;
+            atomic_store(&_cal_msg, CALIB_NONE);
 #if ZTH_SEPARATE_CAL_READ
             cb_zenith_read_analog_cal(in);
 #endif
@@ -36,7 +36,7 @@ void stick_task(analog_data_t *in, analog_data_t *out) {
             break;
         }
         case CALIB_UNDO: {
-            _cal_msg = CALIB_NONE;
+            atomic_store(&_cal_msg, CALIB_NONE);
             calibration_undo();
             break;
         }

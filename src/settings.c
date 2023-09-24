@@ -34,9 +34,11 @@ void settings_reset_to_factory() {
         },
         .btn_remap_profile_gamecube = {
             .p = ZTH_GAMECUBE_REMAP_DEFAULT
-        }
+        },
+        .user_settings = {0}
     };
     // clang-format on
+    cb_zenith_user_settings_reset(_settings.user_settings);
     memcpy(&_settings, &set, sizeof(_settings));
 }
 
@@ -93,3 +95,7 @@ void settings_load() {
 }
 
 void settings_inform_commit() { atomic_store(&_please_commit, true); }
+
+inline uint8_t *zenith_get_user_settings_ptr(void) {
+    return _settings.user_settings;
+}

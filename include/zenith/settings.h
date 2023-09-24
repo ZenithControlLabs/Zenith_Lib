@@ -12,6 +12,9 @@
 // we control the settings struct.
 static const uint32_t SETTINGS_VER = 0x5001;
 
+// A buffer for settings usable by any userland app using this library.
+#define USER_SETTINGS_SIZE 32
+
 typedef struct {
     uint32_t settings_ver;
     comms_mode_t comms_mode;
@@ -19,6 +22,7 @@ typedef struct {
     stick_config_t stick_config;
     btn_remap_profile_t btn_remap_profile_n64;
     btn_remap_profile_t btn_remap_profile_gamecube;
+    uint8_t user_settings[USER_SETTINGS_SIZE];
 } zenith_settings_t;
 
 typedef enum { SETTINGS_NONE, SETTINGS_COMMIT, SETTINGS_RESET } settings_cmd_t;

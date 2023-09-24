@@ -1,8 +1,7 @@
 #include "zenith/includes.h"
 
 volatile int _cal_step = 0;
-// TODO: mark as atomic
-volatile cal_msg_t _cal_msg;
+volatile _Atomic cal_msg_t _cal_msg;
 ax_t raw_cal_points_x[CALIBRATION_NUM_STEPS];
 ax_t raw_cal_points_y[CALIBRATION_NUM_STEPS];
 
@@ -138,10 +137,17 @@ void calibration_finish(void) {
     // Linearization normally moves the center point to an implicit 0,0.
     // To carry forth the assumption for notch calibration, we will do the same.
     for (int i = 0; i < NUM_NOTCHES; i++) {
+        // TODO: notch calibration assumes that the notches have an increasing
+        // angle; doing this will mess it up if the sensor is negative to go up
+        // in Y; need to figure out the appropriate place in the code to
+        // compensate for this
         _settings.calib_results.notch_points_x_in[i] =
-            cleaned_points_x[i + 1] - cleaned_points_x[0];
+            (cleaned_points_x[i + 1] - cleaned_points_x[0]);
         _settings.calib_results.notch_points_y_in[i] =
-            cleaned_points_y[i + 1] - cleaned_points_y[0];
+            (cleaned_points_y[i + 1] - cleaned_points_y[0]);
+        debug_print("Notch Point in point:  %d; (x,y) = (%f, %f)\n", i,
+                    _settings.calib_results.notch_points_x_in[i],
+                    _settings.calib_results.notch_points_y_in[i]);
     }
 #endif // ZTH_LINEARIZATON_EN
 

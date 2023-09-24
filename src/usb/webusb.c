@@ -37,11 +37,22 @@ bool webusb_ready_blocking(int timeout) {
 
 void webusb_command_processor(uint8_t *data) {
     _webusb_output_enabled = true;
+
+    if ((data[0] & WEBUSB_CMD_USER_MASK) == WEBUSB_CMD_USER_VAL) {
+        bool perform_write =
+            cb_zenith_user_webusb_cmd(data, _webusb_out_buffer);
+        if (perform_write && webusb_ready_blocking(5000)) {
+            tud_vendor_n_write(0, _webusb_out_buffer, 64);
+            tud_vendor_n_flush(0);
+        }
+        return;
+    }
+
     switch (data[0]) {
     case WEBUSB_CMD_FW_GET: {
         _webusb_out_buffer[0] = WEBUSB_CMD_FW_GET;
-        _webusb_out_buffer[1] = (ZTH_FW_MINOR << 8) | (ZTH_FW_PATCH & 0xFF);
         _webusb_out_buffer[2] = ZTH_FW_MAJOR;
+        _webusb_out_buffer[1] = (ZTH_FW_MINOR << 8) | (ZTH_FW_PATCH & 0xFF);
         if (webusb_ready_blocking(5000)) {
             tud_vendor_n_write(0, _webusb_out_buffer, 64);
             tud_vendor_n_flush(0);
@@ -61,7 +72,7 @@ void webusb_command_processor(uint8_t *data) {
     } break;
 
     case WEBUSB_CMD_CALIBRATION_ADVANCE: {
-        _cal_msg = CALIB_ADVANCE;
+        atomic_store(&_cal_msg, CALIB_ADVANCE);
         debug_print("WebUSB: Got calibration ADVANCE command. (msg=%d)\n",
                     _cal_msg);
         _webusb_out_buffer[0] = WEBUSB_CMD_CALIBRATION_ADVANCE;
@@ -73,7 +84,7 @@ void webusb_command_processor(uint8_t *data) {
 
     case WEBUSB_CMD_CALIBRATION_UNDO: {
         debug_print("WebUSB: Got calibration UNDO command.\n");
-        _cal_msg = CALIB_UNDO;
+        atomic_store(&_cal_msg, CALIB_UNDO);
         _webusb_out_buffer[0] = WEBUSB_CMD_CALIBRATION_UNDO;
         if (webusb_ready_blocking(5000)) {
             tud_vendor_n_write(0, _webusb_out_buffer, 64);
@@ -165,9 +176,6 @@ void webusb_command_processor(uint8_t *data) {
         settings_reset_to_factory();
     } break;
     default: {
-        debug_print(
-            "welp. i guess we are taking the default case (data[0]=%d)\n",
-            data[0]);
         break;
     }
     }
