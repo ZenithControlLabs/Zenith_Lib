@@ -1,6 +1,7 @@
 #ifndef ZENITH_WEBUSB_H
 #define ZENITH_WEBUSB_H
 
+#include <math.h>
 #include <stdint.h>
 
 extern bool _webusb_output_enabled;
@@ -27,6 +28,17 @@ typedef enum {
 
 #define WEBUSB_CMD_USER_MASK 0b11110000
 #define WEBUSB_CMD_USER_VAL 0b01100000
+
+// For ease of communication, the angles are sent to webusb in signed 16-bit
+// format. Because they're just ranges though, they're not supposed to be
+// signed.
+
+// The *2 (1/M_PI_2 = 1/(M_PI/2) => 2 * 1/M_PI) is because the notch snapping
+// checks the angle on both sides of a region. So it would be doubled by
+// default. To compensate, we internally store half, so we dont have to half it
+// every notch remap call, but whenever we send it, we need to double it.
+#define DEADZONE_ANG_TO_WEBUSB(x) (int16_t)((x / M_PI_2) * (1 << (16 - 1)))
+#define DEADZONE_ANG_FROM_WEBUSB(x) ((((float)x) / (1 << (16 - 1))) * M_PI_2)
 
 // defining for access to stick data through WebUSB
 extern analog_data_t _analog_data;

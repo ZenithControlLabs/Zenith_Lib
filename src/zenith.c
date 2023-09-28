@@ -31,7 +31,8 @@ void zenith_loop_core1(void) {
     for (;;) {
         settings_core1_handle_commit();
 
-        stick_task(&_analog_data, &_analog_data_processed);
+        stick_task(atomic_load(&_timestamp), &_analog_data,
+                   &_analog_data_processed);
 
         cb_zenith_core1_inject();
     }

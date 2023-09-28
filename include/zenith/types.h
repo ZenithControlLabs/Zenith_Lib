@@ -46,11 +46,12 @@ typedef union {
 typedef float ax_t;
 
 #define AX_TO_UINT8(x)                                                         \
-    ((uint8_t)((int8_t)(x * (1 << (8 - 1))) + (1 << (8 - 1))))
-#define AX_TO_INT8(x) ((int8_t)(x * (1 << (8 - 1))))
-#define AX_TO_INT32(x) ((int32_t)(x * (1 << (32 - 1))))
-#define INT_N_TO_AX(x, N) (((ax_t)x) / (1 << (N - 1)))
-#define UINT_N_TO_AX(x, N) ((ax_t)((int)(x - (1 << (N - 1)))) / (1 << (N - 1)))
+    ((uint8_t)((int8_t)((x) * (1 << (8 - 1))) + (1 << (8 - 1))))
+#define AX_TO_INT8(x) ((int8_t)((x) * (1 << (8 - 1))))
+#define AX_TO_INT32(x) ((int32_t)((x) * (1 << (32 - 1))))
+#define INT_N_TO_AX(x, N) (((ax_t)(x)) / (1 << (N - 1)))
+#define UINT_N_TO_AX(x, N)                                                     \
+    ((ax_t)((int)((x) - (1 << (N - 1)))) / (1 << (N - 1)))
 
 typedef struct {
     ax_t ax1;

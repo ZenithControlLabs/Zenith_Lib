@@ -18,8 +18,56 @@ void inverse(const float in[3][3], float out[3][3]) {
     out[2][2] = (in[0][0] * in[1][1] - in[1][0] * in[0][1]) * invdet;
 }
 
+inline void notch_snap(const ax_t x_in, const ax_t y_in, ax_t *x_out,
+                       ax_t *y_out, const calib_results_t *calib_results,
+                       const stick_config_t *stick_config, int region,
+                       float angle) {
+    float boundary_angle = calib_results->boundary_angles[region];
+    // TODO: probably plenty of room for math optimization here
+    // not sure if this method is significantly slowing things down
+    float mag = sqrtf(x_in * x_in + y_in * y_in);
+    ax_t x_in_ref = calib_results->notch_points_x_in[region];
+    ax_t y_in_ref = calib_results->notch_points_y_in[region];
+    float mag_ref = sqrtf(x_in_ref * x_in_ref + y_in_ref * y_in_ref);
+
+    // Notch snapping:
+    // If the angle is within an angle deadzone
+    // And the magnitude is over the threshold (don't want near-center
+    // values to be snapped)
+    // printf("ba: %f; a: %f; r: %d\n", boundary_angle, angle, region);
+    if (mag >= (stick_config->mag_threshold * mag_ref)) {
+        int next_region = (region == (NUM_NOTCHES - 1)) ? 0 : (region + 1);
+        if (region == 0) {
+            float last_boundary_angle =
+                calib_results->boundary_angles[NUM_NOTCHES - 1];
+            if ((boundary_angle - angle + 2 * M_PI) <
+                stick_config->angle_deadzones[next_region]) {
+                *x_out = mag * cosf(boundary_angle);
+                *y_out = mag * sinf(boundary_angle);
+            } else if ((angle - last_boundary_angle) <
+                       stick_config->angle_deadzones[region]) {
+                *x_out = mag * cosf(last_boundary_angle);
+                *y_out = mag * sinf(last_boundary_angle);
+            }
+        } else {
+            float last_boundary_angle =
+                calib_results->boundary_angles[region - 1];
+            if ((boundary_angle - angle) <
+                stick_config->angle_deadzones[next_region]) {
+                *x_out = mag * cosf(boundary_angle);
+                *y_out = mag * sinf(boundary_angle);
+            } else if ((angle - last_boundary_angle) <
+                       stick_config->angle_deadzones[region]) {
+                *x_out = mag * cosf(last_boundary_angle);
+                *y_out = mag * sinf(last_boundary_angle);
+            }
+        }
+    }
+}
+
 void notch_remap(const ax_t x_in, const ax_t y_in, ax_t *x_out, ax_t *y_out,
-                 const calib_results_t *calib_results) {
+                 const calib_results_t *calib_results,
+                 const stick_config_t *stick_config) {
     // determine the angle between the x unit vector and the current position
     // vector
     float angle = atan2f(y_in, x_in);
@@ -32,23 +80,31 @@ void notch_remap(const ax_t x_in, const ax_t y_in, ax_t *x_out, ax_t *y_out,
     // Start at the last region. Note that the corresponding boundary angle for
     // this is 0. So look at all the other boundary angles in counterclockwise
     // fashion. The first one that is greater than our angle is +1 from the
-    // region we're looking in, so save region and break. Otherwise, if none of
-    // them hit, we're in the last region.
+    // region we're looking in, so save region and break.
+    // Otherwise, if none of them hit, we're in the last region.
     int region = 0;
     for (int i = 0; i < NUM_NOTCHES; i++) {
-        if (angle < calib_results->boundary_angles[i]) {
+        float boundary_angle = calib_results->boundary_angles[i];
+        if (angle < boundary_angle) {
             region = i;
             break;
         }
     }
 
+    ax_t x_in_adj = x_in;
+    ax_t y_in_adj = y_in;
+    // uint32_t thing = time_us_32();
+    notch_snap(x_in, y_in, &x_in_adj, &y_in_adj, calib_results, stick_config,
+               region, angle);
+    // debug_print("time: %d\n", time_us_32() - thing);
+
     // Apply the affine transformation using the coefficients found during
     // calibration
     // Note the lack of translation. This is due to assuming center = 0.
-    *x_out = calib_results->affine_coeffs[region][0] * x_in +
-             calib_results->affine_coeffs[region][1] * y_in;
-    *y_out = calib_results->affine_coeffs[region][2] * x_in +
-             calib_results->affine_coeffs[region][3] * y_in;
+    *x_out = calib_results->affine_coeffs[region][0] * x_in_adj +
+             calib_results->affine_coeffs[region][1] * y_in_adj;
+    *y_out = calib_results->affine_coeffs[region][2] * x_in_adj +
+             calib_results->affine_coeffs[region][3] * y_in_adj;
 }
 
 // Multiply two 3x3 matrices

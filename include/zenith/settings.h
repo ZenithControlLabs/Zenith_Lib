@@ -10,7 +10,7 @@
 
 // Not in the userland-accessible zenith_cfg.h file because
 // we control the settings struct.
-static const uint32_t SETTINGS_VER = 0x5001;
+static const uint32_t SETTINGS_VER = 0x5003;
 
 // A buffer for settings usable by any userland app using this library.
 #define USER_SETTINGS_SIZE 32
@@ -22,6 +22,7 @@ typedef struct {
     stick_config_t stick_config;
     btn_remap_profile_t btn_remap_profile_n64;
     btn_remap_profile_t btn_remap_profile_gamecube;
+    // Always put at the end
     uint8_t user_settings[USER_SETTINGS_SIZE];
 } zenith_settings_t;
 

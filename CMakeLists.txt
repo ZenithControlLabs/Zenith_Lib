@@ -4,6 +4,8 @@ target_sources(zenith_lib INTERFACE
   ${CMAKE_CURRENT_LIST_DIR}/src/zenith.c
   ${CMAKE_CURRENT_LIST_DIR}/src/settings.c 
 
+  ${CMAKE_CURRENT_LIST_DIR}/src/utilities/running_avg.c
+
   ${CMAKE_CURRENT_LIST_DIR}/src/usb/desc_bos.c 
   ${CMAKE_CURRENT_LIST_DIR}/src/usb/usb.c 
   ${CMAKE_CURRENT_LIST_DIR}/src/usb/descriptors.c 

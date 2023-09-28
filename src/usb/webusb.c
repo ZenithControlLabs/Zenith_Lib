@@ -103,6 +103,8 @@ void webusb_command_processor(uint8_t *data) {
             INT_N_TO_AX((int8_t)data[2], 8);
         _settings.stick_config.notch_points_y[notch] =
             INT_N_TO_AX((int8_t)data[3], 8);
+        _settings.stick_config.angle_deadzones[notch] =
+            DEADZONE_ANG_FROM_WEBUSB(((data[4] << 8) + data[5]));
         // recompute notch calibration
         notch_calibrate(_settings.calib_results.notch_points_x_in,
                         _settings.calib_results.notch_points_y_in,
@@ -114,10 +116,15 @@ void webusb_command_processor(uint8_t *data) {
         debug_print("WebUSB: Got notch points GET command.\n");
         _webusb_out_buffer[0] = WEBUSB_CMD_NOTCHES_GET;
         for (int i = 0; i < NUM_NOTCHES; i++) {
-            _webusb_out_buffer[i * 2 + 1] =
+            _webusb_out_buffer[i * 4 + 1] =
                 AX_TO_INT8(_settings.stick_config.notch_points_x[i]);
-            _webusb_out_buffer[i * 2 + 2] =
+            _webusb_out_buffer[i * 4 + 2] =
                 AX_TO_INT8(_settings.stick_config.notch_points_y[i]);
+            // angle format used only for serializing data
+            uint16_t deadzone_ang = DEADZONE_ANG_TO_WEBUSB(
+                _settings.stick_config.angle_deadzones[i]);
+            _webusb_out_buffer[i * 4 + 3] = deadzone_ang >> 8;
+            _webusb_out_buffer[i * 4 + 4] = deadzone_ang;
         }
         if (webusb_ready_blocking(5000)) {
             tud_vendor_n_write(0, _webusb_out_buffer, 64);
