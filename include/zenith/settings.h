@@ -10,7 +10,7 @@
 
 // Not in the userland-accessible zenith_cfg.h file because
 // we control the settings struct.
-static const uint32_t SETTINGS_VER = 0x5003;
+static const uint32_t SETTINGS_VER = 0x5002;
 
 // A buffer for settings usable by any userland app using this library.
 #define USER_SETTINGS_SIZE 32
