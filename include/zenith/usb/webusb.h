@@ -21,6 +21,9 @@ typedef enum {
     WEBUSB_CMD_REMAP_SET = 0x05,
     WEBUSB_CMD_REMAP_GET = 0xA5,
 
+    WEBUSB_CMD_MAG_THRESH_SET = 0x06,
+    WEBUSB_CMD_MAG_THRESH_GET = 0xA6,
+
     WEBUSB_CMD_UPDATE_FW = 0xF1,
     WEBUSB_CMD_COMMIT_SETTINGS = 0xF2,
     WEBUSB_CMD_RESET_SETTINGS = 0xF3
@@ -29,6 +32,7 @@ typedef enum {
 #define WEBUSB_CMD_USER_MASK 0b11110000
 #define WEBUSB_CMD_USER_VAL 0b01100000
 
+/*
 // For ease of communication, the angles are sent to webusb in signed 16-bit
 // format. Because they're just ranges though, they're not supposed to be
 // signed.
@@ -39,6 +43,7 @@ typedef enum {
 // every notch remap call, but whenever we send it, we need to double it.
 #define DEADZONE_ANG_TO_WEBUSB(x) (int16_t)((x / M_PI_2) * (1 << (16 - 1)))
 #define DEADZONE_ANG_FROM_WEBUSB(x) ((((float)x) / (1 << (16 - 1))) * M_PI_2)
+*/
 
 // defining for access to stick data through WebUSB
 extern analog_data_t _analog_data;

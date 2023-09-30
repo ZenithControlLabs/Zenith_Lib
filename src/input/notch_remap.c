@@ -18,10 +18,9 @@ void inverse(const float in[3][3], float out[3][3]) {
     out[2][2] = (in[0][0] * in[1][1] - in[1][0] * in[0][1]) * invdet;
 }
 
-inline void notch_snap(const ax_t x_in, const ax_t y_in, ax_t *x_out,
-                       ax_t *y_out, const calib_results_t *calib_results,
-                       const stick_config_t *stick_config, int region,
-                       float angle) {
+void notch_snap(const ax_t x_in, const ax_t y_in, ax_t *x_out, ax_t *y_out,
+                const calib_results_t *calib_results,
+                const stick_config_t *stick_config, int region, float angle) {
     float boundary_angle = calib_results->boundary_angles[region];
     // TODO: probably plenty of room for math optimization here
     // not sure if this method is significantly slowing things down
@@ -29,6 +28,9 @@ inline void notch_snap(const ax_t x_in, const ax_t y_in, ax_t *x_out,
     ax_t x_in_ref = calib_results->notch_points_x_in[region];
     ax_t y_in_ref = calib_results->notch_points_y_in[region];
     float mag_ref = sqrtf(x_in_ref * x_in_ref + y_in_ref * y_in_ref);
+
+    // printf("m: %f, mr: %f, mt: %f\n", mag, mag_ref,
+    //        stick_config->mag_threshold);
 
     // Notch snapping:
     // If the angle is within an angle deadzone

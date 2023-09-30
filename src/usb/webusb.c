@@ -103,8 +103,8 @@ void webusb_command_processor(uint8_t *data) {
             INT_N_TO_AX((int8_t)data[2], 8);
         _settings.stick_config.notch_points_y[notch] =
             INT_N_TO_AX((int8_t)data[3], 8);
-        _settings.stick_config.angle_deadzones[notch] =
-            DEADZONE_ANG_FROM_WEBUSB(((data[4] << 8) + data[5]));
+        memcpy(_settings.stick_config.angle_deadzones + notch, data + 4,
+               sizeof(float));
         // recompute notch calibration
         notch_calibrate(_settings.calib_results.notch_points_x_in,
                         _settings.calib_results.notch_points_y_in,
@@ -116,15 +116,13 @@ void webusb_command_processor(uint8_t *data) {
         debug_print("WebUSB: Got notch points GET command.\n");
         _webusb_out_buffer[0] = WEBUSB_CMD_NOTCHES_GET;
         for (int i = 0; i < NUM_NOTCHES; i++) {
-            _webusb_out_buffer[i * 4 + 1] =
+            _webusb_out_buffer[i * 6 + 1] =
                 AX_TO_INT8(_settings.stick_config.notch_points_x[i]);
-            _webusb_out_buffer[i * 4 + 2] =
+            _webusb_out_buffer[i * 6 + 2] =
                 AX_TO_INT8(_settings.stick_config.notch_points_y[i]);
-            // angle format used only for serializing data
-            uint16_t deadzone_ang = DEADZONE_ANG_TO_WEBUSB(
-                _settings.stick_config.angle_deadzones[i]);
-            _webusb_out_buffer[i * 4 + 3] = deadzone_ang >> 8;
-            _webusb_out_buffer[i * 4 + 4] = deadzone_ang;
+
+            memcpy(_webusb_out_buffer + (i * 6 + 3),
+                   _settings.stick_config.angle_deadzones + i, sizeof(float));
         }
         if (webusb_ready_blocking(5000)) {
             tud_vendor_n_write(0, _webusb_out_buffer, 64);
@@ -148,6 +146,7 @@ void webusb_command_processor(uint8_t *data) {
         }
         // remap_listen_enable(data[1], data[2]);
     } break;
+
     case WEBUSB_CMD_REMAP_GET: {
         debug_print("WebUSB: Got Remap GET command.\n");
         _webusb_out_buffer[0] = WEBUSB_CMD_REMAP_GET;
@@ -165,6 +164,23 @@ void webusb_command_processor(uint8_t *data) {
             break;
         }
         }
+        if (webusb_ready_blocking(5000)) {
+            tud_vendor_n_write(0, _webusb_out_buffer, 64);
+            tud_vendor_n_flush(0);
+        }
+    } break;
+
+    case WEBUSB_CMD_MAG_THRESH_SET: {
+        debug_print("WebUSB: Got Magnitude Threshold SET command.\n");
+        memcpy(&_settings.stick_config.mag_threshold, data + 4, sizeof(float));
+    } break;
+
+    case WEBUSB_CMD_MAG_THRESH_GET: {
+        debug_print("WebUSB: Got Magnitude Threshold GET command.\n");
+        _webusb_out_buffer[0] = WEBUSB_CMD_MAG_THRESH_GET;
+        memcpy(_webusb_out_buffer + 4, &_settings.stick_config.mag_threshold,
+               sizeof(float));
+
         if (webusb_ready_blocking(5000)) {
             tud_vendor_n_write(0, _webusb_out_buffer, 64);
             tud_vendor_n_flush(0);

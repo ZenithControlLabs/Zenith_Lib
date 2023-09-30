@@ -5,6 +5,10 @@ void apply_btn_remap(btn_remap_profile_t *remap_profile, btn_data_t *in,
     uint32_t r = 0;
     for (int i = 0; i < 32; i++) {
         uint8_t remap_code = remap_profile->p[i];
+
+        // 0xFF => disable this button.
+        if (remap_code == 0xFF)
+            continue;
         // TODO: assumption that compiler will store bitfield as b1 in LSB, for
         // performance
         uint8_t btn = (in->r >> i) & 0x01;

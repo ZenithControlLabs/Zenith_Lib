@@ -22,7 +22,7 @@ typedef struct {
     ax_t notch_points_x[NUM_NOTCHES];
     ax_t notch_points_y[NUM_NOTCHES];
     float angle_deadzones[NUM_NOTCHES];
-    ax_t mag_threshold;
+    float mag_threshold;
 } stick_config_t;
 
 void process_stick(analog_data_t *in, analog_data_t *out,

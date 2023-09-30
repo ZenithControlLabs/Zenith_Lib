@@ -29,7 +29,7 @@ void settings_reset_to_factory() {
                 INT_N_TO_AX(-85, 8), INT_N_TO_AX(-70, 8)
             },
             .angle_deadzones = {0},
-            .mag_threshold = INT_N_TO_AX(80, 8)
+            .mag_threshold = .8 // 80% into the notch by default
         },
         .btn_remap_profile_n64 = {
             .p = ZTH_N64_REMAP_DEFAULT
